@@ -18,20 +18,22 @@ from app.models import (
 def create_concert(
     session: Session,
     date: date,
-    title: str,
     orchestra: str = "",
     venue_id: int | None = None,
     conductor_id: int | None = None,
+    choir: str = "",
+    choir_director_id: int | None = None,
     notes: str = "",
     pieces: list[dict] | None = None,
     artists: list[dict] | None = None,
 ) -> Concert:
     concert = Concert(
         date=date,
-        title=title,
         orchestra=orchestra,
         venue_id=venue_id,
         conductor_id=conductor_id,
+        choir=choir,
+        choir_director_id=choir_director_id,
         notes=notes,
     )
     session.add(concert)
@@ -60,13 +62,13 @@ def get_concert(session: Session, concert_id: int) -> Concert | None:
 
 
 def _search_filter(search: str):
-    """Return OR filter across concert title, conductor, venue, composer, artist."""
+    """OR filter across concert orchestra, conductor, venue, composer, artist, piece."""
     if not search:
         return None
     pattern = f"%{search}%"
     return or_(
-        Concert.title.ilike(pattern),
         Concert.orchestra.ilike(pattern),
+        Concert.choir.ilike(pattern),
         Conductor.first_name.ilike(pattern),
         Conductor.last_name.ilike(pattern),
         Venue.name.ilike(pattern),

@@ -36,15 +36,24 @@ class Concert(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[date] = mapped_column(Date)
-    title: Mapped[str] = mapped_column(String(300))
     orchestra: Mapped[str] = mapped_column(String(200), default="")
     venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id"), default=None)
     conductor_id: Mapped[int | None] = mapped_column(ForeignKey("conductors.id"), default=None)
+    # Choir — both fields are optional; a concert may have no choir at all
+    choir: Mapped[str] = mapped_column(String(200), default="")
+    choir_director_id: Mapped[int | None] = mapped_column(
+        ForeignKey("conductors.id"), default=None
+    )
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     venue: Mapped[Venue | None] = relationship(back_populates="concerts")
-    conductor: Mapped[Conductor | None] = relationship(back_populates="concerts")
+    conductor: Mapped[Conductor | None] = relationship(
+        back_populates="concerts", foreign_keys="[Concert.conductor_id]"
+    )
+    choir_director: Mapped[Conductor | None] = relationship(
+        foreign_keys="[Concert.choir_director_id]"
+    )
     artist_links: Mapped[list[ConcertArtist]] = relationship(
         back_populates="concert", cascade="all, delete-orphan"
     )
@@ -57,5 +66,14 @@ class Concert(Base):
         back_populates="concert", cascade="all, delete-orphan"
     )
 
+    def display_label(self) -> str:
+        """Human-readable label for lists (no title field)."""
+        parts = [str(self.date)]
+        if self.orchestra:
+            parts.append(self.orchestra)
+        if self.venue:
+            parts.append(str(self.venue))
+        return " · ".join(parts)
+
     def __repr__(self) -> str:
-        return f"{self.date} — {self.title}"
+        return self.display_label()

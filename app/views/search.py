@@ -1,19 +1,28 @@
 from nicegui import ui
 
 from app.database import get_session
+from app.i18n import t
 from app.services.search_service import search_all
 
 
 def search_page(query: str = "") -> None:
     session = get_session()
 
-    ui.label("Search").classes("text-2xl font-bold mb-4")
+    ui.label(t("search_heading")).classes("text-2xl font-bold mb-4")
     search_input = (
-        ui.input("Search composers, conductors, artists, venues, pieces…", value=query)
+        ui.input(t("search_all_placeholder"), value=query)
         .classes("w-full text-lg")
     )
 
     results_container = ui.column().classes("w-full mt-4 gap-6")
+
+    entity_labels = {
+        "concerts": t("results_concerts"),
+        "conductors": t("results_conductors"),
+        "composers": t("results_composers"),
+        "artists": t("results_artists"),
+        "venues": t("results_venues"),
+    }
 
     def run_search(q: str):
         results_container.clear()
@@ -22,15 +31,18 @@ def search_page(query: str = "") -> None:
         results = search_all(session, q.strip())
         with results_container:
             if results["concerts"]:
-                ui.label(f"Concerts ({len(results['concerts'])})").classes("text-lg font-semibold")
+                label_text = f"{entity_labels['concerts']} ({len(results['concerts'])})"
+                ui.label(label_text).classes("text-lg font-semibold")
                 for c in results["concerts"]:
-                    row_classes = "items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    row_classes = (
+                        "items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    )
                     with ui.row().classes(row_classes).on(
                         "click", lambda _, cid=c.id: ui.navigate.to(f"/concerts/{cid}")
                     ):
                         ui.label(str(c.date)).classes("text-gray-400 w-24 shrink-0")
                         with ui.column().classes("gap-0"):
-                            ui.label(c.title).classes("font-medium")
+                            ui.label(c.orchestra or "—").classes("font-medium")
                             sub = []
                             if c.conductor:
                                 sub.append(c.conductor.full_name)
@@ -39,15 +51,16 @@ def search_page(query: str = "") -> None:
                             if sub:
                                 ui.label(" · ".join(sub)).classes("text-sm text-gray-500")
 
-            for key, label in [("conductors", "Conductors"), ("composers", "Composers"),
-                                ("artists", "Artists"), ("venues", "Venues")]:
+            for key in ["conductors", "composers", "artists", "venues"]:
                 items = results[key]
                 if items:
-                    ui.label(f"{label} ({len(items)})").classes("text-lg font-semibold")
+                    ui.label(
+                        f"{entity_labels[key]} ({len(items)})"
+                    ).classes("text-lg font-semibold")
                     for item in items:
                         ui.label(str(item)).classes("text-gray-700 ml-2")
 
-    search_input.on("update:model-value", lambda e: run_search(e.value))
+    search_input.on("update:model-value", lambda e: run_search(e.value or ""))
 
     if query:
         run_search(query)

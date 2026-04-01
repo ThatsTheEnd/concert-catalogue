@@ -20,11 +20,12 @@ class Piece(Base):
 
     @property
     def display_name(self) -> str:
+        """title, key, opus — natural reading order."""
         parts = [self.title]
-        if self.opus_number:
-            parts.append(self.opus_number)
         if self.key:
             parts.append(self.key)
+        if self.opus_number:
+            parts.append(self.opus_number)
         return ", ".join(parts)
 
     def __repr__(self) -> str:

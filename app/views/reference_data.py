@@ -1,6 +1,7 @@
 from nicegui import ui
 
 from app.database import get_session
+from app.i18n import t
 from app.services.person_service import (
     create_artist,
     create_composer,
@@ -10,16 +11,18 @@ from app.services.person_service import (
     list_conductors,
 )
 from app.services.piece_service import create_piece, list_pieces
+from app.services.venue_service import create_venue, list_venues
 
 
 def reference_data_page() -> None:
     session = get_session()
 
     with ui.tabs() as tabs:
-        tab_composers = ui.tab("Composers")
-        tab_conductors = ui.tab("Conductors")
-        tab_artists = ui.tab("Artists")
-        tab_pieces = ui.tab("Pieces")
+        tab_composers = ui.tab(t("composers"))
+        tab_conductors = ui.tab(t("conductors"))
+        tab_artists = ui.tab(t("artists"))
+        tab_pieces = ui.tab(t("pieces"))
+        tab_venues = ui.tab(t("venue"))
 
     with ui.tab_panels(tabs, value=tab_composers).classes("w-full"):
         with ui.tab_panel(tab_composers):
@@ -30,15 +33,17 @@ def reference_data_page() -> None:
             _artists_panel(session)
         with ui.tab_panel(tab_pieces):
             _pieces_panel(session)
+        with ui.tab_panel(tab_venues):
+            _venues_panel(session)
 
 
 def _composers_panel(session) -> None:
     columns = [
-        {"name": "last_name", "label": "Last Name", "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": "First Name", "field": "first_name"},
-        {"name": "birth_year", "label": "Born", "field": "birth_year"},
-        {"name": "death_year", "label": "Died", "field": "death_year"},
-        {"name": "nationality", "label": "Nationality", "field": "nationality"},
+        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
+        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
+        {"name": "birth_year", "label": t("birth_year"), "field": "birth_year"},
+        {"name": "death_year", "label": t("death_year"), "field": "death_year"},
+        {"name": "nationality", "label": t("nationality"), "field": "nationality"},
     ]
 
     def rows():
@@ -53,12 +58,12 @@ def _composers_panel(session) -> None:
 
     table = ui.table(columns=columns, rows=rows(), row_key="id").classes("w-full")
 
-    with ui.row().classes("mt-2 gap-2"):
-        fn = ui.input("First name").classes("w-40")
-        ln = ui.input("Last name").classes("w-40")
-        by = ui.input("Birth year").classes("w-24")
-        dy = ui.input("Death year").classes("w-24")
-        nat = ui.input("Nationality").classes("w-32")
+    with ui.row().classes("mt-2 gap-2 flex-wrap"):
+        fn = ui.input(t("first_name")).classes("w-40")
+        ln = ui.input(t("last_name")).classes("w-40")
+        by = ui.input(t("birth_year")).classes("w-24")
+        dy = ui.input(t("death_year")).classes("w-24")
+        nat = ui.input(t("nationality")).classes("w-32")
 
         def add():
             create_composer(
@@ -72,13 +77,13 @@ def _composers_panel(session) -> None:
             for inp in [fn, ln, by, dy, nat]:
                 inp.set_value("")
 
-        ui.button("Add", on_click=add).props("color=primary")
+        ui.button(t("add"), on_click=add).props("color=primary")
 
 
 def _conductors_panel(session) -> None:
     columns = [
-        {"name": "last_name", "label": "Last Name", "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": "First Name", "field": "first_name"},
+        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
+        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
     ]
 
     def rows():
@@ -90,8 +95,8 @@ def _conductors_panel(session) -> None:
     table = ui.table(columns=columns, rows=rows(), row_key="id").classes("w-full")
 
     with ui.row().classes("mt-2 gap-2"):
-        fn = ui.input("First name").classes("w-40")
-        ln = ui.input("Last name").classes("w-40")
+        fn = ui.input(t("first_name")).classes("w-40")
+        ln = ui.input(t("last_name")).classes("w-40")
 
         def add():
             create_conductor(session, first_name=fn.value, last_name=ln.value)
@@ -99,14 +104,14 @@ def _conductors_panel(session) -> None:
             fn.set_value("")
             ln.set_value("")
 
-        ui.button("Add", on_click=add).props("color=primary")
+        ui.button(t("add"), on_click=add).props("color=primary")
 
 
 def _artists_panel(session) -> None:
     columns = [
-        {"name": "last_name", "label": "Last Name", "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": "First Name", "field": "first_name"},
-        {"name": "instrument", "label": "Instrument", "field": "instrument"},
+        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
+        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
+        {"name": "instrument", "label": t("instrument"), "field": "instrument"},
     ]
 
     def rows():
@@ -121,9 +126,9 @@ def _artists_panel(session) -> None:
     table = ui.table(columns=columns, rows=rows(), row_key="id").classes("w-full")
 
     with ui.row().classes("mt-2 gap-2"):
-        fn = ui.input("First name").classes("w-40")
-        ln = ui.input("Last name").classes("w-40")
-        instr = ui.input("Instrument").classes("w-40")
+        fn = ui.input(t("first_name")).classes("w-40")
+        ln = ui.input(t("last_name")).classes("w-40")
+        instr = ui.input(t("instrument")).classes("w-40")
 
         def add():
             create_artist(session, first_name=fn.value, last_name=ln.value, instrument=instr.value)
@@ -131,21 +136,24 @@ def _artists_panel(session) -> None:
             for inp in [fn, ln, instr]:
                 inp.set_value("")
 
-        ui.button("Add", on_click=add).props("color=primary")
+        ui.button(t("add"), on_click=add).props("color=primary")
 
 
 def _pieces_panel(session) -> None:
+    # Columns: composer, title, key, opus — key before opus per spec
     columns = [
-        {"name": "composer", "label": "Composer", "field": "composer", "sortable": True},
-        {"name": "title", "label": "Title", "field": "title", "sortable": True},
-        {"name": "opus_number", "label": "Opus", "field": "opus_number"},
-        {"name": "key", "label": "Key", "field": "key"},
+        {"name": "composer", "label": t("composer"), "field": "composer", "sortable": True},
+        {"name": "title", "label": t("piece_title"), "field": "title", "sortable": True},
+        {"name": "key", "label": t("key"), "field": "key"},
+        {"name": "opus_number", "label": t("opus"), "field": "opus_number"},
     ]
 
     def rows():
         return [
-            {"id": p.id, "composer": p.composer.full_name, "title": p.title,
-             "opus_number": p.opus_number, "key": p.key}
+            {
+                "id": p.id, "composer": p.composer.full_name,
+                "title": p.title, "key": p.key, "opus_number": p.opus_number,
+            }
             for p in list_pieces(session)
         ]
 
@@ -154,19 +162,55 @@ def _pieces_panel(session) -> None:
     composers = list_composers(session)
     composer_options = {c.id: c.full_name for c in composers}
 
-    with ui.row().classes("mt-2 gap-2 items-center"):
-        comp_sel = ui.select(composer_options, label="Composer").classes("w-48")
-        title_inp = ui.input("Title").classes("w-60")
-        opus_inp = ui.input("Opus number").classes("w-32")
-        key_inp = ui.input("Key").classes("w-32")
+    with ui.row().classes("mt-2 gap-2 items-center flex-wrap"):
+        comp_sel = ui.select(composer_options, label=t("composer"), with_input=True).classes("w-48")
+        title_inp = ui.input(t("piece_title")).classes("w-60")
+        key_inp = ui.input(t("key")).classes("w-32")
+        opus_inp = ui.input(t("opus")).classes("w-32")
 
         def add():
             if comp_sel.value and title_inp.value:
-                create_piece(session, composer_id=comp_sel.value, title=title_inp.value,
-                             opus_number=opus_inp.value, key=key_inp.value)
+                create_piece(
+                    session,
+                    composer_id=comp_sel.value,
+                    title=title_inp.value,
+                    key=key_inp.value,
+                    opus_number=opus_inp.value,
+                )
                 table.rows = rows()
-                for inp in [title_inp, opus_inp, key_inp]:
+                for inp in [title_inp, key_inp, opus_inp]:
                     inp.set_value("")
                 comp_sel.set_value(None)
 
-        ui.button("Add", on_click=add).props("color=primary")
+        ui.button(t("add"), on_click=add).props("color=primary")
+
+
+def _venues_panel(session) -> None:
+    columns = [
+        {"name": "name", "label": t("col_venue"), "field": "name", "sortable": True},
+        {"name": "city", "label": "City", "field": "city"},
+        {"name": "country", "label": "Country", "field": "country"},
+    ]
+
+    def rows():
+        return [
+            {"id": v.id, "name": v.name, "city": v.city, "country": v.country}
+            for v in list_venues(session)
+        ]
+
+    table = ui.table(columns=columns, rows=rows(), row_key="id").classes("w-full")
+
+    with ui.row().classes("mt-2 gap-2"):
+        name_inp = ui.input("Name").classes("w-48")
+        city_inp = ui.input("City").classes("w-32")
+        country_inp = ui.input("Country").classes("w-32")
+
+        def add():
+            if name_inp.value:
+                create_venue(session, name=name_inp.value, city=city_inp.value,
+                             country=country_inp.value)
+                table.rows = rows()
+                for inp in [name_inp, city_inp, country_inp]:
+                    inp.set_value("")
+
+        ui.button(t("add"), on_click=add).props("color=primary")

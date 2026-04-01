@@ -3,10 +3,12 @@ from datetime import date
 from nicegui import ui
 
 from app.database import get_session
+from app.i18n import t
 from app.models.attachment import Attachment
 from app.services.concert_service import create_concert, get_concert, update_concert
-from app.services.person_service import search_artists, search_conductors
+from app.services.person_service import list_artists, list_conductors
 from app.services.piece_service import search_pieces
+from app.services.venue_service import list_venues
 from app.storage.file_handler import save_upload
 
 
@@ -15,18 +17,27 @@ def concert_form_page(concert_id: int | None = None) -> None:
     existing = get_concert(session, concert_id) if concert_id else None
     is_edit = existing is not None
 
-    # Form state
-    form = {
+    # Pre-load reference data for autocomplete selects
+    all_conductors = {c.id: c.full_name for c in list_conductors(session)}
+    all_conductors_with_none = {None: "—", **all_conductors}
+    all_artists = {a.id: f"{a.full_name} ({a.instrument})" for a in list_artists(session)}
+    all_venues = {v.id: str(v) for v in list_venues(session)}
+    all_venues_with_none = {None: "—", **all_venues}
+
+    form: dict = {
         "date": str(existing.date) if existing else str(date.today()),
-        "title": existing.title if existing else "",
         "orchestra": existing.orchestra if existing else "",
         "venue_id": existing.venue_id if existing else None,
         "conductor_id": existing.conductor_id if existing else None,
+        "choir": existing.choir if existing else "",
+        "choir_director_id": existing.choir_director_id if existing else None,
         "notes": existing.notes if existing else "",
         "pieces": [
             {
-                "piece_id": lnk.piece_id, "sort_order": lnk.sort_order,
-                "notes": lnk.notes, "_label": lnk.piece.display_name,
+                "piece_id": lnk.piece_id,
+                "sort_order": lnk.sort_order,
+                "notes": lnk.notes,
+                "_label": f"{lnk.piece.composer.full_name} — {lnk.piece.display_name}",
             }
             for lnk in (existing.piece_links if existing else [])
         ],
@@ -34,33 +45,54 @@ def concert_form_page(concert_id: int | None = None) -> None:
             {"artist_id": lnk.artist_id, "role": lnk.role, "_label": lnk.artist.full_name}
             for lnk in (existing.artist_links if existing else [])
         ],
-        "new_attachments": [],  # list of (type, filename, bytes)
+        "new_attachments": [],
     }
 
-    ui.label("Edit Concert" if is_edit else "Add Concert").classes("text-2xl font-bold mb-4")
+    heading = t("edit_concert_heading") if is_edit else t("add_concert_heading")
+    ui.label(heading).classes("text-2xl font-bold mb-4")
 
-    # Basic fields
-    with ui.grid(columns=2).classes("w-full gap-4"):
-        ui.input("Date (YYYY-MM-DD)", value=form["date"]).bind_value(form, "date")
-        ui.input("Title", value=form["title"]).bind_value(form, "title")
-        ui.input("Orchestra", value=form["orchestra"]).bind_value(form, "orchestra")
+    # ── Date picker ──────────────────────────────────────────────────────────
+    ui.label(t("date")).classes("font-medium mt-2")
+    date_picker = ui.date(value=form["date"]).classes("w-full")
+    date_picker.on_value_change(lambda e: form.__setitem__("date", e.value))
 
-    # Conductor autocomplete
-    ui.label("Conductor").classes("font-medium mt-4")
+    # ── Basic fields ─────────────────────────────────────────────────────────
+    with ui.grid(columns=2).classes("w-full gap-4 mt-2"):
+        ui.input(t("orchestra"), value=form["orchestra"]).bind_value(form, "orchestra")
+        venue_select = ui.select(
+            options=all_venues_with_none,
+            label=t("venue"),
+            value=form["venue_id"],
+            with_input=True,
+        ).classes("w-full")
+        venue_select.bind_value(form, "venue_id")
+
+    # ── Conductor ────────────────────────────────────────────────────────────
+    ui.label(t("conductor")).classes("font-medium mt-4")
     conductor_select = ui.select(
-        options=[], label="Type to search conductors…", with_input=True, value=form["conductor_id"]
+        options=all_conductors_with_none,
+        label=t("search_conductor"),
+        value=form["conductor_id"],
+        with_input=True,
+        clearable=True,
     ).classes("w-full")
-
-    def search_cond(e):
-        results = search_conductors(session, e.value or "")
-        conductor_select.options = {c.id: c.full_name for c in results}
-        conductor_select.update()
-
-    conductor_select.on("filter", search_cond)
     conductor_select.bind_value(form, "conductor_id")
 
-    # Program section
-    ui.label("Program (in performance order)").classes("font-medium mt-4")
+    # ── Choir ────────────────────────────────────────────────────────────────
+    with ui.expansion(t("choir"), icon="queue_music").classes("w-full mt-2"):
+        with ui.grid(columns=2).classes("w-full gap-4"):
+            ui.input(t("choir_name"), value=form["choir"]).bind_value(form, "choir")
+            choir_dir_select = ui.select(
+                options=all_conductors_with_none,
+                label=t("choir_director_label"),
+                value=form["choir_director_id"],
+                with_input=True,
+                clearable=True,
+            ).classes("w-full")
+            choir_dir_select.bind_value(form, "choir_director_id")
+
+    # ── Program ──────────────────────────────────────────────────────────────
+    ui.label(t("program")).classes("font-medium mt-4")
     piece_rows_container = ui.column().classes("w-full gap-2")
 
     def render_piece_rows():
@@ -68,9 +100,9 @@ def concert_form_page(concert_id: int | None = None) -> None:
         with piece_rows_container:
             for i, item in enumerate(form["pieces"]):
                 with ui.row().classes("items-center gap-2 w-full"):
-                    ui.label(f"{i + 1}.").classes("text-gray-400 w-6")
-                    ui.label(item["_label"]).classes("flex-1")
-                    ui.input("Notes", value=item["notes"]).classes("w-40").on(
+                    ui.label(f"{i + 1}.").classes("text-gray-400 w-6 text-right shrink-0")
+                    ui.label(item["_label"]).classes("flex-1 text-sm")
+                    ui.input(t("piece_notes"), value=item["notes"]).classes("w-36").on(
                         "update:model-value",
                         lambda e, idx=i: form["pieces"][idx].__setitem__("notes", e.value),
                     )
@@ -99,43 +131,41 @@ def concert_form_page(concert_id: int | None = None) -> None:
         form["pieces"].pop(idx)
         render_piece_rows()
 
-    # Add piece
+    # Add piece — server-side filtered (pieces can be many)
     with ui.row().classes("items-center gap-2 mt-2"):
         piece_add_select = ui.select(
-            options=[], label="Search piece to add…", with_input=True
+            options={}, label=t("search_piece"), with_input=True
         ).classes("flex-1")
 
-        def search_p(e):
-            results = search_pieces(session, e.value or "")
+        def on_piece_filter(e):
+            query = e.args if isinstance(e.args, str) else ""
+            results = search_pieces(session, query)
             piece_add_select.options = {
                 p.id: f"{p.composer.full_name} — {p.display_name}" for p in results
             }
             piece_add_select.update()
 
-        piece_add_select.on("filter", search_p)
+        piece_add_select.on("filter", on_piece_filter)
 
         def add_piece():
             pid = piece_add_select.value
-            if pid:
-                from app.services.piece_service import list_pieces
-                all_pieces = {p.id: p for p in list_pieces(session)}
-                if pid in all_pieces:
-                    p = all_pieces[pid]
-                    form["pieces"].append({
-                        "piece_id": pid,
-                        "sort_order": len(form["pieces"]),
-                        "notes": "",
-                        "_label": f"{p.composer.full_name} — {p.display_name}",
-                    })
-                    piece_add_select.set_value(None)
-                    render_piece_rows()
+            label = (piece_add_select.options or {}).get(pid, "")
+            if pid and label:
+                form["pieces"].append({
+                    "piece_id": pid,
+                    "sort_order": len(form["pieces"]),
+                    "notes": "",
+                    "_label": label,
+                })
+                piece_add_select.set_value(None)
+                render_piece_rows()
 
-        ui.button("Add piece", on_click=add_piece)
+        ui.button(t("add_piece"), on_click=add_piece)
 
     render_piece_rows()
 
-    # Soloists section
-    ui.label("Soloists").classes("font-medium mt-4")
+    # ── Soloists / Artists ───────────────────────────────────────────────────
+    ui.label(t("soloists")).classes("font-medium mt-4")
     artist_rows_container = ui.column().classes("w-full gap-2")
 
     def render_artist_rows():
@@ -143,8 +173,8 @@ def concert_form_page(concert_id: int | None = None) -> None:
         with artist_rows_container:
             for i, item in enumerate(form["artists"]):
                 with ui.row().classes("items-center gap-2 w-full"):
-                    ui.label(item["_label"]).classes("flex-1")
-                    ui.input("Role / instrument", value=item["role"]).classes("w-40").on(
+                    ui.label(item["_label"]).classes("flex-1 text-sm")
+                    ui.input(t("role_instrument"), value=item["role"]).classes("w-40").on(
                         "update:model-value",
                         lambda e, idx=i: form["artists"][idx].__setitem__("role", e.value),
                     )
@@ -159,58 +189,57 @@ def concert_form_page(concert_id: int | None = None) -> None:
 
     with ui.row().classes("items-center gap-2 mt-2"):
         artist_add_select = ui.select(
-            options=[], label="Search artist to add…", with_input=True
+            options=all_artists,
+            label=t("search_artist"),
+            with_input=True,
         ).classes("flex-1")
-
-        def search_a(e):
-            results = search_artists(session, e.value or "")
-            artist_add_select.options = {a.id: a.full_name for a in results}
-            artist_add_select.update()
-
-        artist_add_select.on("filter", search_a)
 
         def add_artist():
             aid = artist_add_select.value
-            if aid:
-                from app.services.person_service import list_artists
-                all_artists = {a.id: a for a in list_artists(session)}
-                if aid in all_artists:
-                    a = all_artists[aid]
-                    form["artists"].append({"artist_id": aid, "role": "", "_label": a.full_name})
-                    artist_add_select.set_value(None)
-                    render_artist_rows()
+            label = all_artists.get(aid, "")
+            if aid and label:
+                # Show only name (strip instrument hint) in the row
+                name_only = label.split(" (")[0]
+                form["artists"].append({"artist_id": aid, "role": "", "_label": name_only})
+                artist_add_select.set_value(None)
+                render_artist_rows()
 
-        ui.button("Add artist", on_click=add_artist)
+        ui.button(t("add_artist"), on_click=add_artist)
 
     render_artist_rows()
 
-    # Attachments upload
-    ui.label("Attachments").classes("font-medium mt-4")
-    attachment_types = [
-        ("ticket", "Ticket"), ("program", "Program booklet"), ("review", "Newspaper review(s)")
-    ]
-    for atype, label in attachment_types:
-        with ui.row().classes("items-center gap-2 mt-2"):
-            ui.label(label).classes("w-32")
-            uploader = (
-                ui.upload(label=f"Upload {label}", multiple=(atype != "ticket"), auto_upload=True)
-                .classes("flex-1")
-            )
+    # ── Attachments ──────────────────────────────────────────────────────────
+    with ui.expansion(t("attachments"), icon="attach_file").classes("w-full mt-2"):
+        for atype, label_key in [
+            ("ticket", "upload_ticket"),
+            ("program", "upload_program"),
+            ("review", "upload_reviews"),
+        ]:
+            with ui.row().classes("items-center gap-2 mt-2"):
+                ui.label(t(label_key)).classes("w-48 text-sm")
+                uploader = (
+                    ui.upload(
+                        label=t(label_key),
+                        multiple=(atype != "ticket"),
+                        auto_upload=True,
+                    )
+                    .classes("flex-1")
+                )
 
-            def handle_upload(e, t=atype):
-                form["new_attachments"].append((t, e.name, e.content.read()))
+                def handle_upload(e, at=atype):
+                    form["new_attachments"].append((at, e.name, e.content.read()))
 
-            uploader.on_upload(handle_upload)
+                uploader.on_upload(handle_upload)
 
-    # Notes
-    ui.label("Notes").classes("font-medium mt-4")
-    ui.textarea("Notes", value=form["notes"]).classes("w-full").bind_value(form, "notes")
+    # ── Notes ────────────────────────────────────────────────────────────────
+    ui.label(t("notes")).classes("font-medium mt-4")
+    ui.textarea(t("notes"), value=form["notes"]).classes("w-full").bind_value(form, "notes")
 
-    # Save / Cancel
+    # ── Save / Cancel ────────────────────────────────────────────────────────
     with ui.row().classes("gap-3 mt-6"):
-        ui.button("Cancel", on_click=lambda: ui.navigate.to("/concerts")).props("outline")
+        ui.button(t("cancel"), on_click=lambda: ui.navigate.to("/concerts")).props("outline")
         ui.button(
-            "Save", on_click=lambda: _save(form, concert_id, session, is_edit)
+            t("save"), on_click=lambda: _save(form, concert_id, session, is_edit)
         ).props("color=primary")
 
 
@@ -226,30 +255,29 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
 
     try:
         concert_date = date.fromisoformat(form["date"])
-    except ValueError:
-        ui.notify("Invalid date format. Use YYYY-MM-DD.", type="negative")
+    except (ValueError, TypeError):
+        ui.notify(t("date") + ": invalid format", type="negative")
         return
 
     if is_edit and concert_id:
         concert = get_concert(session, concert_id)
         if concert:
-            # Clear existing links
             concert.piece_links.clear()
             concert.artist_links.clear()
             session.flush()
         update_concert(
             session, concert_id,
             date=concert_date,
-            title=form["title"],
             orchestra=form["orchestra"],
+            venue_id=form["venue_id"],
             conductor_id=form["conductor_id"],
+            choir=form["choir"],
+            choir_director_id=form["choir_director_id"],
             notes=form["notes"],
         )
-        # Re-add relations
         from app.models import ConcertArtist, ConcertPiece
-        concert = get_concert(session, concert_id)
         for item in pieces:
-            session.add(ConcertPiece(concert_id=concert_id, **{k: v for k, v in item.items()}))
+            session.add(ConcertPiece(concert_id=concert_id, **item))
         for item in artists:
             session.add(ConcertArtist(concert_id=concert_id, **item))
         session.commit()
@@ -258,16 +286,17 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
         concert = create_concert(
             session,
             date=concert_date,
-            title=form["title"],
             orchestra=form["orchestra"],
+            venue_id=form["venue_id"],
             conductor_id=form["conductor_id"],
+            choir=form["choir"],
+            choir_director_id=form["choir_director_id"],
             notes=form["notes"],
             pieces=pieces,
             artists=artists,
         )
         target_id = concert.id
 
-    # Save new attachments
     for atype, filename, content in form.get("new_attachments", []):
         file_path = save_upload(target_id, atype, filename, content)
         session.add(Attachment(
@@ -279,5 +308,5 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
     session.commit()
     session.close()
 
-    ui.notify("Saved!", type="positive")
+    ui.notify(t("saved"), type="positive")
     ui.navigate.to(f"/concerts/{target_id}")

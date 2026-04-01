@@ -13,7 +13,9 @@ class Conductor(Base):
     first_name: Mapped[str] = mapped_column(String(100), default="")
     last_name: Mapped[str] = mapped_column(String(100))
 
-    concerts: Mapped[list[Concert]] = relationship(back_populates="conductor")
+    concerts: Mapped[list[Concert]] = relationship(
+        back_populates="conductor", foreign_keys="[Concert.conductor_id]"
+    )
 
     @property
     def full_name(self) -> str:

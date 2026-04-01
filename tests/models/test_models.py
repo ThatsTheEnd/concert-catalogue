@@ -37,17 +37,71 @@ def test_composer_full_name(session):
     assert c.birth_year == 1756
 
 
-def test_piece_display_name(session):
+def test_piece_display_name_key_before_opus(session):
+    """Key must appear before opus number in display name."""
     composer = Composer(first_name="Ludwig van", last_name="Beethoven")
     session.add(composer)
     session.flush()
     piece = Piece(
-        composer_id=composer.id, title="Symphony No. 9", opus_number="Op. 125", key="D minor"
+        composer_id=composer.id, title="Symphony No. 9", key="D minor", opus_number="Op. 125"
     )
     session.add(piece)
     session.commit()
     assert "Symphony No. 9" in piece.display_name
     assert "Op. 125" in piece.display_name
+    assert "D minor" in piece.display_name
+    # key must come before opus in the string
+    assert piece.display_name.index("D minor") < piece.display_name.index("Op. 125")
+
+
+def test_concert_without_title(session):
+    """Concerts have no title — identified by date, orchestra, venue."""
+    concert = Concert(date=date(2024, 3, 1), orchestra="Berliner Philharmoniker")
+    session.add(concert)
+    session.commit()
+    assert concert.id is not None
+    assert repr(concert)  # should not crash
+
+
+def test_concert_without_conductor(session):
+    """A chamber orchestra may perform without a conductor."""
+    concert = Concert(date=date(2024, 3, 1), orchestra="Artemis Quartett")
+    session.add(concert)
+    session.commit()
+    assert concert.conductor is None
+
+
+def test_concert_with_choir(session):
+    """Concert can have a choir name and choir director (both optional)."""
+    director = Conductor(first_name="Simon", last_name="Halsey")
+    session.add(director)
+    session.flush()
+    concert = Concert(
+        date=date(2024, 4, 10),
+        orchestra="Berliner Philharmoniker",
+        choir="Rundfunkchor Berlin",
+        choir_director_id=director.id,
+    )
+    session.add(concert)
+    session.commit()
+    assert concert.choir == "Rundfunkchor Berlin"
+    assert concert.choir_director.full_name == "Simon Halsey"
+
+
+def test_concert_with_multiple_soloists(session):
+    """A concert can have more than one soloist."""
+    a1 = Artist(first_name="Anne-Sophie", last_name="Mutter", instrument="Violin")
+    a2 = Artist(first_name="Yo-Yo", last_name="Ma", instrument="Cello")
+    session.add_all([a1, a2])
+    session.flush()
+    concert = Concert(date=date(2024, 5, 1), orchestra="Chamber Orchestra")
+    session.add(concert)
+    session.flush()
+    session.add(ConcertArtist(concert_id=concert.id, artist_id=a1.id, role="Soloist"))
+    session.add(ConcertArtist(concert_id=concert.id, artist_id=a2.id, role="Soloist"))
+    session.commit()
+    session.refresh(concert)
+    assert len(concert.artist_links) == 2
 
 
 def test_concert_with_all_relations(session):
@@ -64,7 +118,6 @@ def test_concert_with_all_relations(session):
 
     concert = Concert(
         date=date(2023, 11, 15),
-        title="Brahms Evening",
         orchestra="Berliner Philharmoniker",
         venue_id=venue.id,
         conductor_id=conductor.id,
@@ -94,7 +147,7 @@ def test_concert_pieces_ordered_by_sort_order(session):
     session.add_all([piece1, piece2])
     session.flush()
 
-    concert = Concert(date=date(2024, 1, 10), title="Beethoven Night")
+    concert = Concert(date=date(2024, 1, 10), orchestra="Festspielorchester")
     session.add(concert)
     session.flush()
 

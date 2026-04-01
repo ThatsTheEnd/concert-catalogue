@@ -14,7 +14,7 @@ def test_search_finds_concert_by_composer(session):
     concert = create_concert(
         session,
         date=date(2023, 3, 10),
-        title="Mozart Evening",
+        orchestra="Staatskapelle Berlin",
         pieces=[{"piece_id": piece.id, "sort_order": 1}],
     )
     results = search_all(session, "Mozart")
@@ -27,7 +27,7 @@ def test_search_finds_concert_by_conductor(session):
     concert = create_concert(
         session,
         date=date(2023, 4, 1),
-        title="Russian Night",
+        orchestra="Mariinsky Orchestra",
         conductor_id=conductor.id,
     )
     results = search_all(session, "Gergiev")
