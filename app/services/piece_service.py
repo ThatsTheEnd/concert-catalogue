@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -8,6 +9,7 @@ def create_piece(session: Session, composer_id: int, title: str, **kwargs) -> Pi
     piece = Piece(composer_id=composer_id, title=title, **kwargs)
     session.add(piece)
     session.commit()
+    logger.info("Created piece: {!r} (composer_id={})", title, composer_id)
     return piece
 
 

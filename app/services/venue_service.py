@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,6 +9,7 @@ def create_venue(session: Session, name: str, city: str, country: str = "") -> V
     obj = Venue(name=name, city=city, country=country)
     session.add(obj)
     session.commit()
+    logger.info("Created venue: {!r}, {}", name, city)
     return obj
 
 

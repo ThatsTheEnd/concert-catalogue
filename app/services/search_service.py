@@ -5,6 +5,7 @@ from app.models import (
     Artist,
     Composer,
     Conductor,
+    Orchestra,
     Venue,
 )
 from app.services.concert_service import list_concerts
@@ -39,10 +40,15 @@ def search_all(session: Session, query: str) -> dict:
         ).order_by(Venue.name)
     ))
 
+    orchestras = list(session.scalars(
+        select(Orchestra).where(Orchestra.name.ilike(p)).order_by(Orchestra.name)
+    ))
+
     return {
         "concerts": concerts,
         "conductors": conductors,
         "composers": composers,
         "artists": artists,
         "venues": venues,
+        "orchestras": orchestras,
     }

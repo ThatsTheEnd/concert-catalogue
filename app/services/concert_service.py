@@ -1,5 +1,6 @@
 from datetime import date
 
+from loguru import logger
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -10,6 +11,7 @@ from app.models import (
     ConcertArtist,
     ConcertPiece,
     Conductor,
+    Orchestra,
     Piece,
     Venue,
 )
@@ -18,7 +20,7 @@ from app.models import (
 def create_concert(
     session: Session,
     date: date,
-    orchestra: str = "",
+    orchestra_id: int | None = None,
     venue_id: int | None = None,
     conductor_id: int | None = None,
     choir: str = "",
@@ -29,7 +31,7 @@ def create_concert(
 ) -> Concert:
     concert = Concert(
         date=date,
-        orchestra=orchestra,
+        orchestra_id=orchestra_id,
         venue_id=venue_id,
         conductor_id=conductor_id,
         choir=choir,
@@ -54,6 +56,10 @@ def create_concert(
         ))
 
     session.commit()
+    logger.info(
+        "Created concert id={} date={} orchestra_id={} venue_id={} conductor_id={}",
+        concert.id, date, orchestra_id, venue_id, conductor_id,
+    )
     return concert
 
 
@@ -62,12 +68,12 @@ def get_concert(session: Session, concert_id: int) -> Concert | None:
 
 
 def _search_filter(search: str):
-    """OR filter across concert orchestra, conductor, venue, composer, artist, piece."""
+    """OR filter across orchestra name, choir, conductor, venue, composer, artist, piece."""
     if not search:
         return None
     pattern = f"%{search}%"
     return or_(
-        Concert.orchestra.ilike(pattern),
+        Orchestra.name.ilike(pattern),
         Concert.choir.ilike(pattern),
         Conductor.first_name.ilike(pattern),
         Conductor.last_name.ilike(pattern),
@@ -84,6 +90,7 @@ def _search_filter(search: str):
 def _base_query(search: str = ""):
     stmt = (
         select(Concert)
+        .outerjoin(Concert.orchestra)
         .outerjoin(Concert.conductor)
         .outerjoin(Concert.venue)
         .outerjoin(Concert.artist_links)
@@ -111,6 +118,7 @@ def list_concerts(
         .limit(limit)
         .offset(offset)
         .options(
+            joinedload(Concert.orchestra),
             joinedload(Concert.venue),
             joinedload(Concert.conductor),
         )
@@ -130,6 +138,7 @@ def update_concert(session: Session, concert_id: int, **kwargs) -> Concert | Non
     for key, value in kwargs.items():
         setattr(concert, key, value)
     session.commit()
+    logger.info("Updated concert id={} fields={}", concert_id, list(kwargs.keys()))
     return concert
 
 
@@ -138,3 +147,4 @@ def delete_concert(session: Session, concert_id: int) -> None:
     if concert is not None:
         session.delete(concert)
         session.commit()
+        logger.info("Deleted concert id={}", concert_id)

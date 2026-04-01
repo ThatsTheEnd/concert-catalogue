@@ -3,7 +3,10 @@
     "allow": [
       "Bash(uv init:*)",
       "Bash(uv add:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(python -c \"import nicegui; print\\(nicegui.__version__\\)\")",
+      "Bash(cat .venv/lib/python3.14/site-packages/nicegui-*.dist-info/METADATA)",
+      "Bash(uv sync:*)"
     ]
   }
 }

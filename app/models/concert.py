@@ -36,7 +36,7 @@ class Concert(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[date] = mapped_column(Date)
-    orchestra: Mapped[str] = mapped_column(String(200), default="")
+    orchestra_id: Mapped[int | None] = mapped_column(ForeignKey("orchestras.id"), default=None)
     venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id"), default=None)
     conductor_id: Mapped[int | None] = mapped_column(ForeignKey("conductors.id"), default=None)
     # Choir — both fields are optional; a concert may have no choir at all
@@ -47,6 +47,7 @@ class Concert(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
+    orchestra: Mapped[Orchestra | None] = relationship(back_populates="concerts")
     venue: Mapped[Venue | None] = relationship(back_populates="concerts")
     conductor: Mapped[Conductor | None] = relationship(
         back_populates="concerts", foreign_keys="[Concert.conductor_id]"
@@ -70,7 +71,7 @@ class Concert(Base):
         """Human-readable label for lists (no title field)."""
         parts = [str(self.date)]
         if self.orchestra:
-            parts.append(self.orchestra)
+            parts.append(self.orchestra.name)
         if self.venue:
             parts.append(str(self.venue))
         return " · ".join(parts)

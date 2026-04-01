@@ -1,11 +1,13 @@
 from datetime import date
 
+from loguru import logger
 from nicegui import ui
 
 from app.database import get_session
 from app.i18n import t
 from app.models.attachment import Attachment
 from app.services.concert_service import create_concert, get_concert, update_concert
+from app.services.orchestra_service import list_orchestras
 from app.services.person_service import list_artists, list_conductors
 from app.services.piece_service import search_pieces
 from app.services.venue_service import list_venues
@@ -21,12 +23,14 @@ def concert_form_page(concert_id: int | None = None) -> None:
     all_conductors = {c.id: c.full_name for c in list_conductors(session)}
     all_conductors_with_none = {None: "—", **all_conductors}
     all_artists = {a.id: f"{a.full_name} ({a.instrument})" for a in list_artists(session)}
+    all_orchestras = {o.id: o.name for o in list_orchestras(session)}
+    all_orchestras_with_none = {None: "—", **all_orchestras}
     all_venues = {v.id: str(v) for v in list_venues(session)}
     all_venues_with_none = {None: "—", **all_venues}
 
     form: dict = {
         "date": str(existing.date) if existing else str(date.today()),
-        "orchestra": existing.orchestra if existing else "",
+        "orchestra_id": existing.orchestra_id if existing else None,
         "venue_id": existing.venue_id if existing else None,
         "conductor_id": existing.conductor_id if existing else None,
         "choir": existing.choir if existing else "",
@@ -58,7 +62,14 @@ def concert_form_page(concert_id: int | None = None) -> None:
 
     # ── Basic fields ─────────────────────────────────────────────────────────
     with ui.grid(columns=2).classes("w-full gap-4 mt-2"):
-        ui.input(t("orchestra"), value=form["orchestra"]).bind_value(form, "orchestra")
+        orchestra_select = ui.select(
+            options=all_orchestras_with_none,
+            label=t("orchestra"),
+            value=form["orchestra_id"],
+            with_input=True,
+        ).classes("w-full")
+        orchestra_select.bind_value(form, "orchestra_id")
+
         venue_select = ui.select(
             options=all_venues_with_none,
             label=t("venue"),
@@ -128,6 +139,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
         render_piece_rows()
 
     def _remove_piece(idx: int):
+        logger.debug("Removing piece at index {}", idx)
         form["pieces"].pop(idx)
         render_piece_rows()
 
@@ -151,6 +163,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
             pid = piece_add_select.value
             label = (piece_add_select.options or {}).get(pid, "")
             if pid and label:
+                logger.debug("Adding piece id={} to concert form", pid)
                 form["pieces"].append({
                     "piece_id": pid,
                     "sort_order": len(form["pieces"]),
@@ -184,6 +197,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
                     ).props("flat dense color=negative")
 
     def _remove_artist(idx: int):
+        logger.debug("Removing artist at index {}", idx)
         form["artists"].pop(idx)
         render_artist_rows()
 
@@ -198,6 +212,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
             aid = artist_add_select.value
             label = all_artists.get(aid, "")
             if aid and label:
+                logger.debug("Adding artist id={} to concert form", aid)
                 # Show only name (strip instrument hint) in the row
                 name_only = label.split(" (")[0]
                 form["artists"].append({"artist_id": aid, "role": "", "_label": name_only})
@@ -259,6 +274,8 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
         ui.notify(t("date") + ": invalid format", type="negative")
         return
 
+    logger.info("Saving concert (edit={}) date={}", is_edit, concert_date)
+
     if is_edit and concert_id:
         concert = get_concert(session, concert_id)
         if concert:
@@ -268,7 +285,7 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
         update_concert(
             session, concert_id,
             date=concert_date,
-            orchestra=form["orchestra"],
+            orchestra_id=form["orchestra_id"],
             venue_id=form["venue_id"],
             conductor_id=form["conductor_id"],
             choir=form["choir"],
@@ -286,7 +303,7 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
         concert = create_concert(
             session,
             date=concert_date,
-            orchestra=form["orchestra"],
+            orchestra_id=form["orchestra_id"],
             venue_id=form["venue_id"],
             conductor_id=form["conductor_id"],
             choir=form["choir"],

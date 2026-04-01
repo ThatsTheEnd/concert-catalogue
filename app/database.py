@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -18,6 +19,7 @@ def get_engine(db_path: Path = DB_PATH):
 def create_session_factory(db_path: Path = DB_PATH) -> sessionmaker[Session]:
     engine = get_engine(db_path)
     Base.metadata.create_all(engine)
+    logger.info("Database ready at {}", db_path)
     return sessionmaker(bind=engine, expire_on_commit=False)
 
 

@@ -12,7 +12,7 @@ class Piece(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     composer_id: Mapped[int] = mapped_column(ForeignKey("composers.id"))
     title: Mapped[str] = mapped_column(String(300))
-    opus_number: Mapped[str] = mapped_column(String(50), default="")
+    catalogue_number: Mapped[str] = mapped_column(String(50), default="")
     key: Mapped[str] = mapped_column(String(50), default="")
 
     composer: Mapped[Composer] = relationship(back_populates="pieces")
@@ -20,12 +20,22 @@ class Piece(Base):
 
     @property
     def display_name(self) -> str:
-        """title, key, opus — natural reading order."""
+        """title, key, catalogue — natural reading order.
+
+        The catalogue number is prefixed with the composer's catalogue abbreviation
+        (e.g. "KV" for Mozart, "HWV" for Handel) when present.
+        """
         parts = [self.title]
         if self.key:
             parts.append(self.key)
-        if self.opus_number:
-            parts.append(self.opus_number)
+        if self.catalogue_number:
+            prefix = (
+                self.composer.catalogue
+                if self.composer and self.composer.catalogue
+                else ""
+            )
+            num_str = f"{prefix} {self.catalogue_number}".strip() if prefix else self.catalogue_number
+            parts.append(num_str)
         return ", ".join(parts)
 
     def __repr__(self) -> str:

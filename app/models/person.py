@@ -51,7 +51,7 @@ class Composer(Base):
     last_name: Mapped[str] = mapped_column(String(100))
     birth_year: Mapped[int | None] = mapped_column(default=None)
     death_year: Mapped[int | None] = mapped_column(default=None)
-    nationality: Mapped[str] = mapped_column(String(100), default="")
+    catalogue: Mapped[str] = mapped_column(String(50), default="")
 
     pieces: Mapped[list[Piece]] = relationship(back_populates="composer")
 

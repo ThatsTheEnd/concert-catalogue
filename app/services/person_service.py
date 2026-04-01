@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,7 @@ def create_conductor(
     obj = Conductor(first_name=first_name, last_name=last_name, **kwargs)
     session.add(obj)
     session.commit()
+    logger.info("Created conductor: {} {}", first_name, last_name)
     return obj
 
 
@@ -31,6 +33,7 @@ def create_composer(
     obj = Composer(first_name=first_name, last_name=last_name, **kwargs)
     session.add(obj)
     session.commit()
+    logger.info("Created composer: {} {}", first_name, last_name)
     return obj
 
 
@@ -52,6 +55,7 @@ def create_artist(
     obj = Artist(first_name=first_name, last_name=last_name, instrument=instrument, **kwargs)
     session.add(obj)
     session.commit()
+    logger.info("Created artist: {} {} ({})", first_name, last_name, instrument)
     return obj
 
 
