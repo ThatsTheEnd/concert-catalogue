@@ -13,6 +13,25 @@ def create_piece(session: Session, composer_id: int, title: str, **kwargs) -> Pi
     return piece
 
 
+def update_piece(session: Session, piece_id: int, **kwargs) -> Piece | None:
+    obj = session.get(Piece, piece_id)
+    if obj is None:
+        return None
+    for k, v in kwargs.items():
+        setattr(obj, k, v)
+    session.commit()
+    logger.info("Updated piece id={} fields={}", piece_id, list(kwargs.keys()))
+    return obj
+
+
+def delete_piece(session: Session, piece_id: int) -> None:
+    obj = session.get(Piece, piece_id)
+    if obj is not None:
+        session.delete(obj)
+        session.commit()
+        logger.info("Deleted piece id={}", piece_id)
+
+
 def list_pieces(session: Session) -> list[Piece]:
     stmt = (
         select(Piece)

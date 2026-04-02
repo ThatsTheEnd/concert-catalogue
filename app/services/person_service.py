@@ -15,6 +15,25 @@ def create_conductor(
     return obj
 
 
+def update_conductor(session: Session, conductor_id: int, **kwargs) -> Conductor | None:
+    obj = session.get(Conductor, conductor_id)
+    if obj is None:
+        return None
+    for k, v in kwargs.items():
+        setattr(obj, k, v)
+    session.commit()
+    logger.info("Updated conductor id={} fields={}", conductor_id, list(kwargs.keys()))
+    return obj
+
+
+def delete_conductor(session: Session, conductor_id: int) -> None:
+    obj = session.get(Conductor, conductor_id)
+    if obj is not None:
+        session.delete(obj)
+        session.commit()
+        logger.info("Deleted conductor id={}", conductor_id)
+
+
 def list_conductors(session: Session) -> list[Conductor]:
     return list(session.scalars(select(Conductor).order_by(Conductor.last_name)))
 
@@ -37,6 +56,25 @@ def create_composer(
     return obj
 
 
+def update_composer(session: Session, composer_id: int, **kwargs) -> Composer | None:
+    obj = session.get(Composer, composer_id)
+    if obj is None:
+        return None
+    for k, v in kwargs.items():
+        setattr(obj, k, v)
+    session.commit()
+    logger.info("Updated composer id={} fields={}", composer_id, list(kwargs.keys()))
+    return obj
+
+
+def delete_composer(session: Session, composer_id: int) -> None:
+    obj = session.get(Composer, composer_id)
+    if obj is not None:
+        session.delete(obj)
+        session.commit()
+        logger.info("Deleted composer id={}", composer_id)
+
+
 def list_composers(session: Session) -> list[Composer]:
     return list(session.scalars(select(Composer).order_by(Composer.last_name)))
 
@@ -57,6 +95,25 @@ def create_artist(
     session.commit()
     logger.info("Created artist: {} {} ({})", first_name, last_name, instrument)
     return obj
+
+
+def update_artist(session: Session, artist_id: int, **kwargs) -> Artist | None:
+    obj = session.get(Artist, artist_id)
+    if obj is None:
+        return None
+    for k, v in kwargs.items():
+        setattr(obj, k, v)
+    session.commit()
+    logger.info("Updated artist id={} fields={}", artist_id, list(kwargs.keys()))
+    return obj
+
+
+def delete_artist(session: Session, artist_id: int) -> None:
+    obj = session.get(Artist, artist_id)
+    if obj is not None:
+        session.delete(obj)
+        session.commit()
+        logger.info("Deleted artist id={}", artist_id)
 
 
 def list_artists(session: Session) -> list[Artist]:
