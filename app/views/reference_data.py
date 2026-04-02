@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database import get_session
 from app.i18n import t
+from app.utils import filter_rows
 from app.services.orchestra_service import (
     create_orchestra,
     delete_orchestra,
@@ -64,14 +65,6 @@ def reference_data_page() -> None:
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-def _filter_rows(all_rows: list[dict], query: str) -> list[dict]:
-    """Return rows where any string value contains *query* (case-insensitive)."""
-    q = query.strip().lower()
-    if not q:
-        return all_rows
-    return [r for r in all_rows if any(q in str(v).lower() for v in r.values())]
-
-
 def _add_action_slot(table: ui.table) -> None:
     """Inject edit/delete icon buttons into a column named 'actions'."""
     table.add_slot(
@@ -120,10 +113,12 @@ def _orchestras_panel(session) -> None:
     def refresh():
         nonlocal all_rows
         all_rows = rows()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
@@ -216,12 +211,14 @@ def _composers_panel(session, comp_refresh_hooks: list) -> None:
     def refresh():
         nonlocal all_rows
         all_rows = rows()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
         for hook in comp_refresh_hooks:
             hook()
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
@@ -331,10 +328,12 @@ def _conductors_panel(session) -> None:
     def refresh():
         nonlocal all_rows
         all_rows = rows()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
@@ -427,10 +426,12 @@ def _artists_panel(session) -> None:
     def refresh():
         nonlocal all_rows
         all_rows = rows()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
@@ -535,15 +536,17 @@ def _pieces_panel(session, comp_refresh_hooks: list) -> None:
         nonlocal all_rows, current_comp_opts
         all_rows = rows()
         current_comp_opts = composer_options()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
         comp_sel.options = current_comp_opts
         comp_sel.update()
 
     # Register with the shared hook list so composers panel can trigger a refresh.
     comp_refresh_hooks.append(refresh)
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
@@ -658,10 +661,12 @@ def _venues_panel(session) -> None:
     def refresh():
         nonlocal all_rows
         all_rows = rows()
-        table.rows = _filter_rows(all_rows, filter_inp.value)
+        table.rows = filter_rows(all_rows, filter_inp.value)
 
-    def on_filter(_): table.rows = _filter_rows(all_rows, filter_inp.value)
-    filter_inp.on("input", on_filter)
+    def on_filter(e):
+        table.rows = filter_rows(all_rows, e.value)
+
+    filter_inp.on_value_change(on_filter)
 
     # ---- Edit dialog ----
     edit_id: list[int] = [0]
