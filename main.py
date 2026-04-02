@@ -76,6 +76,24 @@ def nav_bar(current: str = "") -> None:
                 t("dark_mode")
             )
 
+            # Stop application button
+            def on_stop_click():
+                with ui.dialog() as dlg, ui.card():
+                    ui.label(t("stop_app_confirm")).classes("font-medium")
+                    ui.label(t("stop_app_warning")).classes("text-sm text-gray-500")
+                    with ui.row().classes("gap-2 mt-4"):
+                        ui.button(t("cancel"), on_click=dlg.close).props("outline")
+                        ui.button(
+                            t("stop_app"),
+                            on_click=app.shutdown,
+                        ).props("color=negative")
+                dlg.open()
+
+            ui.button(
+                icon="power_settings_new",
+                on_click=on_stop_click,
+            ).props("flat dense color=white").tooltip(t("stop_app"))
+
 
 @ui.page("/")
 def root():
