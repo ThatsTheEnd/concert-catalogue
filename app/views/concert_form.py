@@ -241,8 +241,8 @@ def concert_form_page(concert_id: int | None = None) -> None:
                     .classes("flex-1")
                 )
 
-                def handle_upload(e, at=atype):
-                    form["new_attachments"].append((at, e.name, e.content.read()))
+                async def handle_upload(e, at=atype):
+                    form["new_attachments"].append((at, e.file.name, await e.file.read()))
 
                 uploader.on_upload(handle_upload)
 

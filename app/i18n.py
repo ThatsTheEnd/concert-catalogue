@@ -93,6 +93,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "dark_mode": "Dark mode",
         "light_mode": "Light mode",
         "language": "DE",  # button shows what you'd switch TO
+        # Stop app
+        "stop_app": "Stop",
+        "stop_app_confirm": "Stop the application?",
+        "stop_app_warning": "The server will shut down and you will lose access to the app.",
     },
     "de": {
         # Nav
@@ -185,6 +189,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "dark_mode": "Dunkelmodus",
         "light_mode": "Hellmodus",
         "language": "EN",  # button shows what you'd switch TO
+        # Stop app
+        "stop_app": "Stopp",
+        "stop_app_confirm": "Anwendung beenden?",
+        "stop_app_warning": "Der Server wird heruntergefahren und du verlierst den Zugang zur App.",
     },
 }
 

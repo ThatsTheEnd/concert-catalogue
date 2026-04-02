@@ -39,7 +39,7 @@ def concerts_list_page() -> None:
         load()
 
     def on_row_click(e):
-        concert_id = e.args["row"]["id"]
+        concert_id = e.args[1]["id"]
         logger.debug("Navigating to concert id={}", concert_id)
         ui.navigate.to(f"/concerts/{concert_id}")
 
