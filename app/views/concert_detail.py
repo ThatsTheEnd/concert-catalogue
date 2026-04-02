@@ -11,6 +11,7 @@ from app.storage.file_handler import url_for_upload
 def concert_detail_page(concert_id: int) -> None:
     logger.debug("Viewing concert id={}", concert_id)
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
     concert = get_concert(session, concert_id)
 
     if concert is None:

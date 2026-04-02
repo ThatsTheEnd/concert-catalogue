@@ -16,6 +16,7 @@ from app.storage.file_handler import save_upload
 
 def concert_form_page(concert_id: int | None = None) -> None:
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
     existing = get_concert(session, concert_id) if concert_id else None
     is_edit = existing is not None
 
@@ -115,7 +116,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
                     ui.label(item["_label"]).classes("flex-1 text-sm")
                     ui.input(t("piece_notes"), value=item["notes"]).classes("w-36").on(
                         "update:model-value",
-                        lambda e, idx=i: form["pieces"][idx].__setitem__("notes", e.value),
+                        lambda e, idx=i: form["pieces"][idx].__setitem__("notes", e.args),
                     )
                     ui.button(
                         icon="arrow_upward",
@@ -189,7 +190,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
                     ui.label(item["_label"]).classes("flex-1 text-sm")
                     ui.input(t("role_instrument"), value=item["role"]).classes("w-40").on(
                         "update:model-value",
-                        lambda e, idx=i: form["artists"][idx].__setitem__("role", e.value),
+                        lambda e, idx=i: form["artists"][idx].__setitem__("role", e.args),
                     )
                     ui.button(
                         icon="delete",

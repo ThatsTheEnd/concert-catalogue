@@ -1,5 +1,12 @@
-"""Simple EN/DE translation module. Language is stored per-user in app.storage.user."""
-from nicegui import app as _app
+"""Simple EN/DE translation module."""
+
+_current_lang: str = "en"
+
+
+def set_lang(lang: str) -> None:
+    global _current_lang
+    _current_lang = lang
+
 
 _TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
@@ -85,19 +92,17 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "delete_ref_error": "Cannot delete: used in concerts.",
         # Search
         "search_heading": "Search",
-        "search_all_placeholder": "Search composers, conductors, artists, venues, pieces…",
-        "results_concerts": "Concerts",
-        "results_conductors": "Conductors",
-        "results_composers": "Composers",
-        "results_artists": "Artists",
-        "results_venues": "Venues",
-        "results_orchestras": "Orchestras",
+        "search_date_from": "From",
+        "search_date_to": "To",
+        "search_piece_label": "Piece (title)",
+        "conductor_label": "Conductor",
+        "artist": "Artist",
         # Dark mode
         "dark_mode": "Dark mode",
         "light_mode": "Light mode",
         "font_smaller": "Smaller text",
         "font_larger": "Larger text",
-        "language": "DE",  # button shows what you'd switch TO
+        "language": "EN",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stop",
         "stop_app_confirm": "Stop the application?",
@@ -190,19 +195,17 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "delete_ref_error": "Kann nicht gelöscht werden: wird in Konzerten verwendet.",
         # Search
         "search_heading": "Suche",
-        "search_all_placeholder": "Komponisten, Dirigenten, Künstler, Spielstätten, Werke suchen…",
-        "results_concerts": "Konzerte",
-        "results_conductors": "Dirigenten",
-        "results_composers": "Komponisten",
-        "results_artists": "Künstler",
-        "results_venues": "Spielstätten",
-        "results_orchestras": "Orchester",
+        "search_date_from": "Von",
+        "search_date_to": "Bis",
+        "search_piece_label": "Werk (Titel)",
+        "conductor_label": "Dirigent",
+        "artist": "Künstler",
         # Dark mode
         "dark_mode": "Dunkelmodus",
         "light_mode": "Hellmodus",
         "font_smaller": "Kleinere Schrift",
         "font_larger": "Größere Schrift",
-        "language": "EN",  # button shows what you'd switch TO
+        "language": "DE", 
         # Stop app
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",
@@ -216,24 +219,5 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
 
 
 def t(key: str) -> str:
-    """Translate a key using the current user's language preference."""
-    try:
-        lang = _app.storage.user.get("lang", "en")
-    except Exception:
-        lang = "en"
-    return _TRANSLATIONS.get(lang, _TRANSLATIONS["en"]).get(key, key)
-
-
-def current_lang() -> str:
-    try:
-        return _app.storage.user.get("lang", "en")
-    except Exception:
-        return "en"
-
-
-def toggle_lang() -> None:
-    try:
-        lang = _app.storage.user.get("lang", "en")
-        _app.storage.user["lang"] = "de" if lang == "en" else "en"
-    except Exception:
-        pass
+    """Translate a key using the current language."""
+    return _TRANSLATIONS.get(_current_lang, _TRANSLATIONS["en"]).get(key, key)

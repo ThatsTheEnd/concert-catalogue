@@ -1,71 +1,92 @@
-from loguru import logger
+import asyncio
+from datetime import date
+
 from nicegui import ui
 
 from app.database import get_session
 from app.i18n import t
-from app.services.search_service import search_all
+from app.services.concert_service import filter_concerts
+from app.services.orchestra_service import list_orchestras
+from app.services.person_service import list_artists, list_composers, list_conductors
+from app.services.venue_service import list_venues
+
+
+def _parse_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
 
 
 def search_page(query: str = "") -> None:
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
+
+    composers = {None: "—", **{c.id: c.full_name for c in list_composers(session)}}
+    conductors = {None: "—", **{c.id: c.full_name for c in list_conductors(session)}}
+    artists = {None: "—", **{a.id: f"{a.full_name} ({a.instrument})" for a in list_artists(session)}}
+    orchestras = {None: "—", **{o.id: o.name for o in list_orchestras(session)}}
+    venues = {None: "—", **{v.id: str(v) for v in list_venues(session)}}
 
     ui.label(t("search_heading")).classes("text-2xl font-bold mb-4")
-    search_input = (
-        ui.input(t("search_all_placeholder"), value=query)
-        .classes("w-full text-lg")
-    )
 
-    results_container = ui.column().classes("w-full mt-4 gap-6")
+    with ui.card().classes("w-full mb-2 p-4"):
+        with ui.grid(columns=3).classes("w-full gap-4"):
+            date_from_input = ui.input(t("search_date_from")).props("type=date").classes("w-full")
+            date_to_input = ui.input(t("search_date_to")).props("type=date").classes("w-full")
+            piece_input = ui.input(t("search_piece_label"), value=query).classes("w-full")
+        with ui.grid(columns=3).classes("w-full gap-4 mt-2"):
+            composer_sel = ui.select(composers, label=t("composer"), value=None, with_input=True).classes("w-full")
+            conductor_sel = ui.select(conductors, label=t("conductor_label"), value=None, with_input=True).classes("w-full")
+            orchestra_sel = ui.select(orchestras, label=t("orchestra"), value=None, with_input=True).classes("w-full")
+        with ui.grid(columns=2).classes("w-full gap-4 mt-2"):
+            artist_sel = ui.select(artists, label=t("artist"), value=None, with_input=True).classes("w-full")
+            venue_sel = ui.select(venues, label=t("venue"), value=None, with_input=True).classes("w-full")
 
-    entity_labels = {
-        "concerts": t("results_concerts"),
-        "conductors": t("results_conductors"),
-        "composers": t("results_composers"),
-        "artists": t("results_artists"),
-        "venues": t("results_venues"),
-    }
+    count_label = ui.label("").classes("text-sm text-gray-500 mb-2")
 
-    def run_search(q: str):
-        results_container.clear()
-        if not q.strip():
-            return
-        logger.debug("Global search: {!r}", q.strip())
-        results = search_all(session, q.strip())
-        with results_container:
-            if results["concerts"]:
-                label_text = f"{entity_labels['concerts']} ({len(results['concerts'])})"
-                ui.label(label_text).classes("text-lg font-semibold")
-                for c in results["concerts"]:
-                    row_classes = (
-                        "items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded"
-                    )
-                    with ui.row().classes(row_classes).on(
-                        "click", lambda _, cid=c.id: ui.navigate.to(f"/concerts/{cid}")
-                    ):
-                        ui.label(str(c.date)).classes("text-gray-400 w-24 shrink-0")
-                        with ui.column().classes("gap-0"):
-                            orch_name = c.orchestra.name if c.orchestra else "—"
-                            ui.label(orch_name).classes("font-medium")
-                            sub = []
-                            if c.conductor:
-                                sub.append(c.conductor.full_name)
-                            if c.venue:
-                                sub.append(str(c.venue))
-                            if sub:
-                                ui.label(" · ".join(sub)).classes("text-sm text-gray-500")
+    columns = [
+        {"name": "date", "label": t("col_date"), "field": "date", "sortable": True},
+        {"name": "orchestra", "label": t("col_orchestra"), "field": "orchestra"},
+        {"name": "conductor", "label": t("col_conductor"), "field": "conductor"},
+        {"name": "venue", "label": t("col_venue"), "field": "venue"},
+    ]
+    table = ui.table(columns=columns, rows=[], row_key="id").classes("w-full cursor-pointer")
+    table.on("rowClick", lambda e: ui.navigate.to(f"/concerts/{e.args[1]['id']}"))
 
-            for key in ["conductors", "composers", "artists", "venues"]:
-                items = results[key]
-                if items:
-                    ui.label(
-                        f"{entity_labels[key]} ({len(items)})"
-                    ).classes("text-lg font-semibold")
-                    for item in items:
-                        ui.label(str(item)).classes("text-gray-700 ml-2")
+    _debounce: list[asyncio.TimerHandle | None] = [None]
 
-    search_input.on("update:model-value", lambda e: run_search(e.value or ""))
+    def load():
+        concerts = filter_concerts(
+            session,
+            date_from=_parse_date(date_from_input.value),
+            date_to=_parse_date(date_to_input.value),
+            piece_text=piece_input.value.strip(),
+            composer_id=composer_sel.value,
+            conductor_id=conductor_sel.value,
+            artist_id=artist_sel.value,
+            orchestra_id=orchestra_sel.value,
+            venue_id=venue_sel.value,
+        )
+        table.rows = [
+            {
+                "id": c.id,
+                "date": str(c.date),
+                "orchestra": c.orchestra.name if c.orchestra else "—",
+                "conductor": c.conductor.full_name if c.conductor else "—",
+                "venue": str(c.venue) if c.venue else "—",
+            }
+            for c in concerts
+        ]
+        count_label.set_text(f"{len(table.rows)} {t('of_concerts')}")
 
-    if query:
-        run_search(query)
+    def schedule_load(_=None):
+        if _debounce[0] is not None:
+            _debounce[0].cancel()
+        _debounce[0] = asyncio.get_event_loop().call_later(0.3, load)
 
-    session.close()
+    for widget in [date_from_input, date_to_input, composer_sel, conductor_sel, orchestra_sel, artist_sel, venue_sel]:
+        widget.on("update:model-value", lambda _: load())
+    piece_input.on("update:model-value", schedule_load)
+
+    load()

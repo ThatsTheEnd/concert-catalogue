@@ -1,12 +1,12 @@
 import asyncio
-import os
+import webbrowser
 from multiprocessing import freeze_support
 
 from loguru import logger
 from nicegui import app, native, ui
 
 from app.database import DB_PATH, create_session_factory, get_session
-from app.i18n import t
+from app.i18n import set_lang, t
 from app.services.settings_service import get_all_settings, set_setting
 from app.storage.file_handler import UPLOADS_ROOT
 from app.version import get_version
@@ -17,9 +17,6 @@ from app.views.reference_data import reference_data_page
 from app.views.search import search_page
 
 __version__ = get_version()
-
-# Store NiceGUI internal files next to the database, not in the project
-os.environ.setdefault("NICEGUI_STORAGE_PATH", str(DB_PATH.parent / ".nicegui"))
 
 # Initialise DB and static file serving on startup
 create_session_factory()
@@ -36,17 +33,14 @@ _NAV_TAB_INACTIVE = (
 
 
 def nav_bar(current: str = "") -> None:
-    # Load settings from DB and sync into app.storage.user for i18n etc.
     session = get_session()
     settings = get_all_settings(session)
-    app.storage.user["lang"] = settings["lang"]
-    app.storage.user["dark_mode"] = settings["dark_mode"] == "true"
-    app.storage.user["font_size"] = int(settings["font_size"])
+    set_lang(settings["lang"])
 
-    dark = ui.dark_mode(value=app.storage.user["dark_mode"])
+    dark = ui.dark_mode(value=settings["dark_mode"] == "true")
 
     # Apply font size
-    ui.query("body").style(f"font-size: {app.storage.user['font_size']}px")
+    ui.query("body").style(f"font-size: {settings['font_size']}px")
 
     with ui.header().classes("px-6 py-3 flex items-center gap-6"):
         ui.label("KonzertKatalog").classes(
@@ -60,15 +54,10 @@ def nav_bar(current: str = "") -> None:
                 )
 
         with ui.row().classes("ml-auto items-center gap-3"):
-            search_box = (
-                ui.input(placeholder=t("search_placeholder"))
-                .classes("bg-white/10 text-white rounded px-2 py-1 text-sm w-44")
-                .props("borderless dense")
-            )
-            search_box.on(
-                "keydown.enter",
-                lambda e: ui.navigate.to(f"/search?q={search_box.value}"),
-            )
+            ui.button(
+                icon="search",
+                on_click=lambda: ui.navigate.to("/search"),
+            ).props("flat dense color=white").tooltip(t("search_heading"))
 
             # Language toggle — shows the language you'd switch TO
             def on_lang_toggle():
@@ -83,9 +72,8 @@ def nav_bar(current: str = "") -> None:
 
             # Dark/light mode toggle
             def on_dark_toggle():
-                new_val = not app.storage.user["dark_mode"]
+                new_val = settings["dark_mode"] != "true"
                 set_setting(session, "dark_mode", str(new_val).lower())
-                app.storage.user["dark_mode"] = new_val
                 dark.set_value(new_val)
 
             ui.button(
@@ -237,10 +225,12 @@ def page_stopped():
 if __name__ in ("__main__", "__mp_main__"):
     freeze_support()
     logger.info("Starting KonzertKatalog v{} — DB at {}", __version__, DB_PATH)
+    port = native.find_open_port()
+    app.on_startup(lambda: webbrowser.open(f"http://127.0.0.1:{port}"))
     ui.run(
         title="KonzertKatalog",
-        port=native.find_open_port(),
+        port=port,
         reload=False,
         native=False,
-        storage_secret="konzert-katalog-secret",  # required for app.storage.user
+        show=False,
     )
