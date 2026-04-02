@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database import get_session
 from app.i18n import t
-from app.utils import filter_rows
 from app.services.orchestra_service import (
     create_orchestra,
     delete_orchestra,
@@ -29,6 +28,7 @@ from app.services.person_service import (
 )
 from app.services.piece_service import create_piece, delete_piece, list_pieces, update_piece
 from app.services.venue_service import create_venue, delete_venue, list_venues, update_venue
+from app.utils import filter_rows
 
 
 def reference_data_page() -> None:

@@ -100,6 +100,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "stop_app": "Stop",
         "stop_app_confirm": "Stop the application?",
         "stop_app_warning": "The server will shut down and you will lose access to the app.",
+        # Info
+        "info": "Info",
+        "info_version": "Version",
+        "info_database": "Database",
     },
     "de": {
         # Nav
@@ -199,6 +203,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",
         "stop_app_warning": "Der Server wird heruntergefahren und du verlierst den Zugang zur App.",
+        # Info
+        "info": "Info",
+        "info_version": "Version",
+        "info_database": "Datenbank",
     },
 }
 
