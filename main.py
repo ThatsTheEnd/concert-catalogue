@@ -1,11 +1,13 @@
 import asyncio
+import os
 from multiprocessing import freeze_support
 
 from loguru import logger
 from nicegui import app, native, ui
 
-from app.database import DB_PATH, create_session_factory
-from app.i18n import t, toggle_lang
+from app.database import DB_PATH, create_session_factory, get_session
+from app.i18n import t
+from app.services.settings_service import get_all_settings, set_setting
 from app.storage.file_handler import UPLOADS_ROOT
 from app.version import get_version
 from app.views.concert_detail import concert_detail_page
@@ -15,6 +17,9 @@ from app.views.reference_data import reference_data_page
 from app.views.search import search_page
 
 __version__ = get_version()
+
+# Store NiceGUI internal files next to the database, not in the project
+os.environ.setdefault("NICEGUI_STORAGE_PATH", str(DB_PATH.parent / ".nicegui"))
 
 # Initialise DB and static file serving on startup
 create_session_factory()
@@ -31,10 +36,17 @@ _NAV_TAB_INACTIVE = (
 
 
 def nav_bar(current: str = "") -> None:
-    # Dark mode controller — reads user preference stored in app.storage.user
-    dark = ui.dark_mode(
-        value=app.storage.user.get("dark_mode", False)
-    )
+    # Load settings from DB and sync into app.storage.user for i18n etc.
+    session = get_session()
+    settings = get_all_settings(session)
+    app.storage.user["lang"] = settings["lang"]
+    app.storage.user["dark_mode"] = settings["dark_mode"] == "true"
+    app.storage.user["font_size"] = int(settings["font_size"])
+
+    dark = ui.dark_mode(value=app.storage.user["dark_mode"])
+
+    # Apply font size
+    ui.query("body").style(f"font-size: {app.storage.user['font_size']}px")
 
     with ui.header().classes("px-6 py-3 flex items-center gap-6"):
         ui.label("KonzertKatalog").classes(
@@ -60,7 +72,8 @@ def nav_bar(current: str = "") -> None:
 
             # Language toggle — shows the language you'd switch TO
             def on_lang_toggle():
-                toggle_lang()
+                new_lang = "de" if settings["lang"] == "en" else "en"
+                set_setting(session, "lang", new_lang)
                 ui.navigate.reload()
 
             ui.button(
@@ -70,7 +83,8 @@ def nav_bar(current: str = "") -> None:
 
             # Dark/light mode toggle
             def on_dark_toggle():
-                new_val = not app.storage.user.get("dark_mode", False)
+                new_val = not app.storage.user["dark_mode"]
+                set_setting(session, "dark_mode", str(new_val).lower())
                 app.storage.user["dark_mode"] = new_val
                 dark.set_value(new_val)
 
@@ -81,29 +95,11 @@ def nav_bar(current: str = "") -> None:
                 t("dark_mode")
             )
 
-            # Font size controls — persisted per user
-            font_size = app.storage.user.get("font_size", 16)
-            ui.query("body").style(f"font-size: {font_size}px")
-
-            def change_font_size(delta: int):
-                current = app.storage.user.get("font_size", 16)
-                new_size = max(12, min(24, current + delta))
-                app.storage.user["font_size"] = new_size
-                ui.query("body").style(f"font-size: {new_size}px")
-
-            ui.button(
-                icon="text_decrease",
-                on_click=lambda: change_font_size(-2),
-            ).props("flat dense color=white").tooltip(t("font_smaller"))
-            ui.button(
-                icon="text_increase",
-                on_click=lambda: change_font_size(2),
-            ).props("flat dense color=white").tooltip(t("font_larger"))
-
             # Info button — shows version and database location
             def on_info_click():
                 with ui.dialog() as dlg, ui.card().classes("min-w-[360px]"):
                     ui.label("KonzertKatalog").classes("text-lg font-bold")
+                    ui.link('This application on GitHub', 'https://github.com/ThatsTheEnd/concert-catalogue')
                     with ui.grid(columns=2).classes("gap-x-4 gap-y-1 mt-2"):
                         ui.label(t("info_version")).classes("text-sm text-gray-500")
                         ui.label(__version__).classes("text-sm font-mono")
@@ -245,6 +241,6 @@ if __name__ in ("__main__", "__mp_main__"):
         title="KonzertKatalog",
         port=native.find_open_port(),
         reload=False,
-        native=True,
+        native=False,
         storage_secret="konzert-katalog-secret",  # required for app.storage.user
     )
