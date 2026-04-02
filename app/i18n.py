@@ -80,6 +80,9 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "add": "Add",
         "city": "City",
         "country": "Country",
+        "filter_placeholder": "Filter…",
+        "delete_ref_confirm": "Delete this entry?",
+        "delete_ref_error": "Cannot delete: used in concerts.",
         # Search
         "search_heading": "Search",
         "search_all_placeholder": "Search composers, conductors, artists, venues, pieces…",
@@ -172,6 +175,9 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "add": "Hinzufügen",
         "city": "Stadt",
         "country": "Land",
+        "filter_placeholder": "Filtern…",
+        "delete_ref_confirm": "Diesen Eintrag löschen?",
+        "delete_ref_error": "Kann nicht gelöscht werden: wird in Konzerten verwendet.",
         # Search
         "search_heading": "Suche",
         "search_all_placeholder": "Komponisten, Dirigenten, Künstler, Spielstätten, Werke suchen…",

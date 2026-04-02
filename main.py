@@ -17,6 +17,14 @@ uploads_dir.mkdir(parents=True, exist_ok=True)
 app.add_static_files("/uploads", str(uploads_dir))
 
 
+_NAV_TAB_ACTIVE = (
+    "bg-white/25 text-white border-b-2 border-white px-4 py-1.5 rounded-t text-sm font-medium"
+)
+_NAV_TAB_INACTIVE = (
+    "text-white/70 hover:text-white hover:bg-white/10 px-4 py-1.5 rounded-t text-sm"
+)
+
+
 def nav_bar(current: str = "") -> None:
     # Dark mode controller — reads user preference stored in app.storage.user
     dark = ui.dark_mode(
@@ -28,10 +36,11 @@ def nav_bar(current: str = "") -> None:
             "text-xl font-bold tracking-wide cursor-pointer"
         ).on("click", lambda: ui.navigate.to("/concerts"))
 
-        with ui.row().classes("gap-4 flex-1"):
+        with ui.row().classes("gap-1 flex-1"):
             for key, path in [("concerts", "/concerts"), ("reference_data", "/reference")]:
-                active = "underline" if path == current else "opacity-70 hover:opacity-100"
-                ui.link(t(key), path).classes(f"text-white {active}")
+                ui.link(t(key), path).classes(
+                    _NAV_TAB_ACTIVE if path == current else _NAV_TAB_INACTIVE
+                )
 
         with ui.row().classes("ml-auto items-center gap-3"):
             search_box = (
