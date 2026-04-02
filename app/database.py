@@ -1,10 +1,26 @@
+import os
+import sys
 from pathlib import Path
 
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-DB_PATH = Path(__file__).parent.parent / "data" / "konzert.db"
+
+def _default_db_path() -> Path:
+    """Return the platform-appropriate default database path."""
+    if sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support" / "KonzertKatalog"
+    elif sys.platform == "win32":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        base = base / "KonzertKatalog"
+    else:
+        base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+        base = base / "konzertkatalog"
+    return base / "konzert.db"
+
+
+DB_PATH = Path(os.environ.get("KONZERT_DB_PATH", _default_db_path()))
 
 
 class Base(DeclarativeBase):

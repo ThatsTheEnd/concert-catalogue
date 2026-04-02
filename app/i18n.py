@@ -95,11 +95,17 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Dark mode
         "dark_mode": "Dark mode",
         "light_mode": "Light mode",
+        "font_smaller": "Smaller text",
+        "font_larger": "Larger text",
         "language": "DE",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stop",
         "stop_app_confirm": "Stop the application?",
-        "stop_app_warning": "The server will shut down and you will lose access to the app.",
+        "stop_app_warning": "All data is saved and will be there again on next start.",
+        # Info
+        "info": "Info",
+        "info_version": "Version",
+        "info_database": "Database",
     },
     "de": {
         # Nav
@@ -194,11 +200,17 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Dark mode
         "dark_mode": "Dunkelmodus",
         "light_mode": "Hellmodus",
+        "font_smaller": "Kleinere Schrift",
+        "font_larger": "Größere Schrift",
         "language": "EN",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",
-        "stop_app_warning": "Der Server wird heruntergefahren und du verlierst den Zugang zur App.",
+        "stop_app_warning": "Alle Daten sind gespeichert und werden beim nächsten Start wieder da sein.",
+        # Info
+        "info": "Info",
+        "info_version": "Version",
+        "info_database": "Datenbank",
     },
 }
 

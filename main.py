@@ -1,21 +1,25 @@
 import asyncio
-from pathlib import Path
+from multiprocessing import freeze_support
 
-from nicegui import app, ui
+from loguru import logger
+from nicegui import app, native, ui
 
-from app.database import create_session_factory
+from app.database import DB_PATH, create_session_factory
 from app.i18n import t, toggle_lang
+from app.storage.file_handler import UPLOADS_ROOT
+from app.version import get_version
 from app.views.concert_detail import concert_detail_page
 from app.views.concert_form import concert_form_page
 from app.views.concerts_list import concerts_list_page
 from app.views.reference_data import reference_data_page
 from app.views.search import search_page
 
+__version__ = get_version()
+
 # Initialise DB and static file serving on startup
 create_session_factory()
-uploads_dir = Path(__file__).parent / "data" / "uploads"
-uploads_dir.mkdir(parents=True, exist_ok=True)
-app.add_static_files("/uploads", str(uploads_dir))
+UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
+app.add_static_files("/uploads", str(UPLOADS_ROOT))
 
 
 _NAV_TAB_ACTIVE = (
@@ -77,15 +81,55 @@ def nav_bar(current: str = "") -> None:
                 t("dark_mode")
             )
 
+            # Font size controls — persisted per user
+            font_size = app.storage.user.get("font_size", 16)
+            ui.query("body").style(f"font-size: {font_size}px")
+
+            def change_font_size(delta: int):
+                current = app.storage.user.get("font_size", 16)
+                new_size = max(12, min(24, current + delta))
+                app.storage.user["font_size"] = new_size
+                ui.query("body").style(f"font-size: {new_size}px")
+
+            ui.button(
+                icon="text_decrease",
+                on_click=lambda: change_font_size(-2),
+            ).props("flat dense color=white").tooltip(t("font_smaller"))
+            ui.button(
+                icon="text_increase",
+                on_click=lambda: change_font_size(2),
+            ).props("flat dense color=white").tooltip(t("font_larger"))
+
+            # Info button — shows version and database location
+            def on_info_click():
+                with ui.dialog() as dlg, ui.card().classes("min-w-[360px]"):
+                    ui.label("KonzertKatalog").classes("text-lg font-bold")
+                    with ui.grid(columns=2).classes("gap-x-4 gap-y-1 mt-2"):
+                        ui.label(t("info_version")).classes("text-sm text-gray-500")
+                        ui.label(__version__).classes("text-sm font-mono")
+                        ui.label(t("info_database")).classes("text-sm text-gray-500")
+                        ui.label(str(DB_PATH)).classes(
+                            "text-sm font-mono break-all"
+                        )
+                    ui.button(t("close"), on_click=dlg.close).classes("mt-3")
+                dlg.open()
+
+            ui.button(
+                icon="info_outline",
+                on_click=on_info_click,
+            ).props("flat dense color=white").tooltip(t("info"))
+
             # Stop application button
             async def on_stop_click():
                 with ui.dialog() as dlg, ui.card():
+                    logger.debug("Stop app dialog opened")
                     ui.label(t("stop_app_confirm")).classes("font-medium")
                     ui.label(t("stop_app_warning")).classes("text-sm text-gray-500")
                     with ui.row().classes("gap-2 mt-4"):
                         ui.button(t("cancel"), on_click=dlg.close).props("outline")
 
                         async def do_stop():
+                            logger.info("Shutting down application by user request")
                             dlg.close()
                             ui.navigate.to("/stopped")
                             await asyncio.sleep(0.5)
@@ -195,9 +239,12 @@ def page_stopped():
 
 
 if __name__ in ("__main__", "__mp_main__"):
+    freeze_support()
+    logger.info("Starting KonzertKatalog v{} — DB at {}", __version__, DB_PATH)
     ui.run(
         title="KonzertKatalog",
-        port=8080,
+        port=native.find_open_port(),
         reload=False,
+        native=True,
         storage_secret="konzert-katalog-secret",  # required for app.storage.user
     )
