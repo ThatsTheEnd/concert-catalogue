@@ -33,6 +33,7 @@ from app.utils import filter_rows
 
 def reference_data_page() -> None:
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
 
     # Shared list of hooks: pieces panel registers a callback so that composers
     # panel can refresh the composer drop-down after adding a new composer.

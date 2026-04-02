@@ -9,6 +9,7 @@ from app.services.concert_service import count_concerts, list_concerts
 def concerts_list_page() -> None:
     logger.debug("Loading concerts list")
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
     state = {"search": "", "page": 0, "page_size": 50}
 
     def load():

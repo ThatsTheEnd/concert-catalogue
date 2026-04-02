@@ -8,6 +8,7 @@ from app.services.search_service import search_all
 
 def search_page(query: str = "") -> None:
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
 
     ui.label(t("search_heading")).classes("text-2xl font-bold mb-4")
     search_input = (

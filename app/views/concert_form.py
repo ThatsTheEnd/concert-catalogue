@@ -16,6 +16,7 @@ from app.storage.file_handler import save_upload
 
 def concert_form_page(concert_id: int | None = None) -> None:
     session = get_session()
+    ui.context.client.on_disconnect(session.close)
     existing = get_concert(session, concert_id) if concert_id else None
     is_edit = existing is not None
 

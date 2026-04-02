@@ -5,6 +5,7 @@ from pathlib import Path
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 
 def _default_db_path() -> Path:
@@ -29,7 +30,7 @@ class Base(DeclarativeBase):
 
 def get_engine(db_path: Path = DB_PATH):
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    return create_engine(f"sqlite:///{db_path}", echo=False)
+    return create_engine(f"sqlite:///{db_path}", echo=False, poolclass=NullPool)
 
 
 def create_session_factory(db_path: Path = DB_PATH) -> sessionmaker[Session]:

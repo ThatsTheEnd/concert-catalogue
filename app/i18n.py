@@ -1,5 +1,12 @@
-"""Simple EN/DE translation module. Language is stored per-user in app.storage.user."""
-from nicegui import app as _app
+"""Simple EN/DE translation module."""
+
+_current_lang: str = "en"
+
+
+def set_lang(lang: str) -> None:
+    global _current_lang
+    _current_lang = lang
+
 
 _TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
@@ -97,7 +104,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "light_mode": "Light mode",
         "font_smaller": "Smaller text",
         "font_larger": "Larger text",
-        "language": "DE",  # button shows what you'd switch TO
+        "language": "EN",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stop",
         "stop_app_confirm": "Stop the application?",
@@ -202,7 +209,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "light_mode": "Hellmodus",
         "font_smaller": "Kleinere Schrift",
         "font_larger": "Größere Schrift",
-        "language": "EN",  # button shows what you'd switch TO
+        "language": "DE", 
         # Stop app
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",
@@ -216,24 +223,5 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
 
 
 def t(key: str) -> str:
-    """Translate a key using the current user's language preference."""
-    try:
-        lang = _app.storage.user.get("lang", "en")
-    except Exception:
-        lang = "en"
-    return _TRANSLATIONS.get(lang, _TRANSLATIONS["en"]).get(key, key)
-
-
-def current_lang() -> str:
-    try:
-        return _app.storage.user.get("lang", "en")
-    except Exception:
-        return "en"
-
-
-def toggle_lang() -> None:
-    try:
-        lang = _app.storage.user.get("lang", "en")
-        _app.storage.user["lang"] = "de" if lang == "en" else "en"
-    except Exception:
-        pass
+    """Translate a key using the current language."""
+    return _TRANSLATIONS.get(_current_lang, _TRANSLATIONS["en"]).get(key, key)
