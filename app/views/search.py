@@ -1,3 +1,4 @@
+from loguru import logger
 from nicegui import ui
 
 from app.database import get_session
@@ -28,6 +29,7 @@ def search_page(query: str = "") -> None:
         results_container.clear()
         if not q.strip():
             return
+        logger.debug("Global search: {!r}", q.strip())
         results = search_all(session, q.strip())
         with results_container:
             if results["concerts"]:
@@ -42,7 +44,8 @@ def search_page(query: str = "") -> None:
                     ):
                         ui.label(str(c.date)).classes("text-gray-400 w-24 shrink-0")
                         with ui.column().classes("gap-0"):
-                            ui.label(c.orchestra or "—").classes("font-medium")
+                            orch_name = c.orchestra.name if c.orchestra else "—"
+                            ui.label(orch_name).classes("font-medium")
                             sub = []
                             if c.conductor:
                                 sub.append(c.conductor.full_name)

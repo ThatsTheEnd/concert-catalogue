@@ -34,7 +34,9 @@ class Piece(Base):
                 if self.composer and self.composer.catalogue
                 else ""
             )
-            num_str = f"{prefix} {self.catalogue_number}".strip() if prefix else self.catalogue_number
+            num_str = (
+                f"{prefix} {self.catalogue_number}".strip() if prefix else self.catalogue_number
+            )
             parts.append(num_str)
         return ", ".join(parts)
 

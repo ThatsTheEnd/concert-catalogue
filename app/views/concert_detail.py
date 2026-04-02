@@ -1,3 +1,4 @@
+from loguru import logger
 from nicegui import ui
 
 from app.database import get_session
@@ -8,6 +9,7 @@ from app.storage.file_handler import url_for_upload
 
 
 def concert_detail_page(concert_id: int) -> None:
+    logger.debug("Viewing concert id={}", concert_id)
     session = get_session()
     concert = get_concert(session, concert_id)
 
@@ -21,7 +23,7 @@ def concert_detail_page(concert_id: int) -> None:
         with ui.column().classes("gap-1"):
             meta_parts = [str(concert.date)]
             if concert.orchestra:
-                meta_parts.append(concert.orchestra)
+                meta_parts.append(concert.orchestra.name)
             if concert.venue:
                 meta_parts.append(str(concert.venue))
             ui.label(" · ".join(meta_parts)).classes("text-2xl font-bold")

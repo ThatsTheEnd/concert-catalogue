@@ -7,6 +7,7 @@ from app.models import (
     ConcertArtist,
     ConcertPiece,
     Conductor,
+    Orchestra,
     Piece,
     Venue,
 )
@@ -37,26 +38,29 @@ def test_composer_full_name(session):
     assert c.birth_year == 1756
 
 
-def test_piece_display_name_key_before_opus(session):
-    """Key must appear before opus number in display name."""
-    composer = Composer(first_name="Ludwig van", last_name="Beethoven")
+def test_piece_display_name_key_before_catalogue(session):
+    """Key must appear before catalogue number in display name."""
+    composer = Composer(first_name="Ludwig van", last_name="Beethoven", catalogue="Op.")
     session.add(composer)
     session.flush()
     piece = Piece(
-        composer_id=composer.id, title="Symphony No. 9", key="D minor", opus_number="Op. 125"
+        composer_id=composer.id, title="Symphony No. 9", key="D minor", catalogue_number="125"
     )
     session.add(piece)
     session.commit()
     assert "Symphony No. 9" in piece.display_name
     assert "Op. 125" in piece.display_name
     assert "D minor" in piece.display_name
-    # key must come before opus in the string
+    # key must come before catalogue number in the string
     assert piece.display_name.index("D minor") < piece.display_name.index("Op. 125")
 
 
 def test_concert_without_title(session):
     """Concerts have no title — identified by date, orchestra, venue."""
-    concert = Concert(date=date(2024, 3, 1), orchestra="Berliner Philharmoniker")
+    orch = Orchestra(name="Berliner Philharmoniker")
+    session.add(orch)
+    session.flush()
+    concert = Concert(date=date(2024, 3, 1), orchestra_id=orch.id)
     session.add(concert)
     session.commit()
     assert concert.id is not None
@@ -65,7 +69,10 @@ def test_concert_without_title(session):
 
 def test_concert_without_conductor(session):
     """A chamber orchestra may perform without a conductor."""
-    concert = Concert(date=date(2024, 3, 1), orchestra="Artemis Quartett")
+    orch = Orchestra(name="Artemis Quartett")
+    session.add(orch)
+    session.flush()
+    concert = Concert(date=date(2024, 3, 1), orchestra_id=orch.id)
     session.add(concert)
     session.commit()
     assert concert.conductor is None
@@ -76,9 +83,12 @@ def test_concert_with_choir(session):
     director = Conductor(first_name="Simon", last_name="Halsey")
     session.add(director)
     session.flush()
+    orch = Orchestra(name="Berliner Philharmoniker")
+    session.add(orch)
+    session.flush()
     concert = Concert(
         date=date(2024, 4, 10),
-        orchestra="Berliner Philharmoniker",
+        orchestra_id=orch.id,
         choir="Rundfunkchor Berlin",
         choir_director_id=director.id,
     )
@@ -94,7 +104,10 @@ def test_concert_with_multiple_soloists(session):
     a2 = Artist(first_name="Yo-Yo", last_name="Ma", instrument="Cello")
     session.add_all([a1, a2])
     session.flush()
-    concert = Concert(date=date(2024, 5, 1), orchestra="Chamber Orchestra")
+    orch = Orchestra(name="Chamber Orchestra")
+    session.add(orch)
+    session.flush()
+    concert = Concert(date=date(2024, 5, 1), orchestra_id=orch.id)
     session.add(concert)
     session.flush()
     session.add(ConcertArtist(concert_id=concert.id, artist_id=a1.id, role="Soloist"))
@@ -116,9 +129,12 @@ def test_concert_with_all_relations(session):
     session.add_all([piece, artist])
     session.flush()
 
+    orch = Orchestra(name="Berliner Philharmoniker")
+    session.add(orch)
+    session.flush()
     concert = Concert(
         date=date(2023, 11, 15),
-        orchestra="Berliner Philharmoniker",
+        orchestra_id=orch.id,
         venue_id=venue.id,
         conductor_id=conductor.id,
     )
@@ -147,7 +163,10 @@ def test_concert_pieces_ordered_by_sort_order(session):
     session.add_all([piece1, piece2])
     session.flush()
 
-    concert = Concert(date=date(2024, 1, 10), orchestra="Festspielorchester")
+    orch = Orchestra(name="Festspielorchester")
+    session.add(orch)
+    session.flush()
+    concert = Concert(date=date(2024, 1, 10), orchestra_id=orch.id)
     session.add(concert)
     session.flush()
 

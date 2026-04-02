@@ -222,8 +222,8 @@ def _pieces_panel(session) -> None:
 def _venues_panel(session) -> None:
     columns = [
         {"name": "name", "label": t("col_venue"), "field": "name", "sortable": True},
-        {"name": "city", "label": "City", "field": "city"},
-        {"name": "country", "label": "Country", "field": "country"},
+        {"name": "city", "label": t("city"), "field": "city"},
+        {"name": "country", "label": t("country"), "field": "country"},
     ]
 
     def rows():
@@ -235,9 +235,9 @@ def _venues_panel(session) -> None:
     table = ui.table(columns=columns, rows=rows(), row_key="id").classes("w-full")
 
     with ui.row().classes("mt-2 gap-2"):
-        name_inp = ui.input("Name").classes("w-48")
-        city_inp = ui.input("City").classes("w-32")
-        country_inp = ui.input("Country").classes("w-32")
+        name_inp = ui.input(t("col_venue")).classes("w-48")
+        city_inp = ui.input(t("city")).classes("w-32")
+        country_inp = ui.input(t("country")).classes("w-32")
 
         def add():
             if name_inp.value:

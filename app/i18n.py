@@ -78,6 +78,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "catalogue_number": "Catalogue no.",
         "composer": "Composer",
         "add": "Add",
+        "city": "City",
+        "country": "Country",
         # Search
         "search_heading": "Search",
         "search_all_placeholder": "Search composers, conductors, artists, venues, pieces…",
@@ -168,6 +170,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "catalogue_number": "Verz.-Nr.",
         "composer": "Komponist",
         "add": "Hinzufügen",
+        "city": "Stadt",
+        "country": "Land",
         # Search
         "search_heading": "Suche",
         "search_all_placeholder": "Komponisten, Dirigenten, Künstler, Spielstätten, Werke suchen…",

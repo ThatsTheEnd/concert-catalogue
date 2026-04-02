@@ -10,15 +10,17 @@ from datetime import date
 
 from app.models import Artist, Composer, Piece
 from app.services.concert_service import create_concert, get_concert, update_concert
+from app.services.orchestra_service import create_orchestra
 from app.services.person_service import create_conductor, search_conductors
 
 
 def test_concert_without_conductor_chamber_orchestra(session):
     """A chamber orchestra plays without a conductor — conductor_id must be optional."""
+    orch = create_orchestra(session, name="Artemis Quartett")
     concert = create_concert(
         session,
         date=date(2024, 2, 14),
-        orchestra="Artemis Quartett",
+        orchestra_id=orch.id,
         conductor_id=None,
     )
     fetched = get_concert(session, concert.id)
@@ -35,10 +37,11 @@ def test_concert_with_multiple_soloists(session):
     session.add_all([a1, a2, a3])
     session.flush()
 
+    orch = create_orchestra(session, name="Berliner Philharmoniker")
     concert = create_concert(
         session,
         date=date(2024, 3, 10),
-        orchestra="Berliner Philharmoniker",
+        orchestra_id=orch.id,
         artists=[
             {"artist_id": a1.id, "role": "Soloist"},
             {"artist_id": a2.id, "role": "Soloist"},
@@ -59,10 +62,11 @@ def test_concert_with_choir_and_director(session):
     conductor = create_conductor(session, first_name="Simon", last_name="Rattle")
     choir_dir = create_conductor(session, first_name="Simon", last_name="Halsey")
 
+    orch = create_orchestra(session, name="Berliner Philharmoniker")
     concert = create_concert(
         session,
         date=date(2024, 5, 1),
-        orchestra="Berliner Philharmoniker",
+        orchestra_id=orch.id,
         conductor_id=conductor.id,
         choir="Rundfunkchor Berlin",
         choir_director_id=choir_dir.id,
@@ -77,10 +81,11 @@ def test_concert_with_choir_and_director(session):
 
 def test_concert_with_choir_no_director(session):
     """Choir director is optional — a choir name alone is valid."""
+    orch = create_orchestra(session, name="Münchner Philharmoniker")
     concert = create_concert(
         session,
         date=date(2024, 6, 1),
-        orchestra="Münchner Philharmoniker",
+        orchestra_id=orch.id,
         choir="Chor des Bayerischen Rundfunks",
         choir_director_id=None,
     )
@@ -115,10 +120,11 @@ def test_concert_update_persists_choir_and_soloists(session):
     session.add(artist)
     session.flush()
 
+    orch = create_orchestra(session, name="Orchestre de Paris")
     concert = create_concert(
         session,
         date=date(2022, 9, 1),
-        orchestra="Orchestre de Paris",
+        orchestra_id=orch.id,
         conductor_id=conductor.id,
         artists=[{"artist_id": artist.id, "role": "Soloist"}],
     )
@@ -145,10 +151,11 @@ def test_program_piece_ordering_after_save(session):
     session.add_all([overture, concerto, symphony])
     session.flush()
 
+    orch = create_orchestra(session, name="Wiener Philharmoniker")
     concert = create_concert(
         session,
         date=date(2024, 7, 15),
-        orchestra="Wiener Philharmoniker",
+        orchestra_id=orch.id,
         pieces=[
             {"piece_id": overture.id, "sort_order": 0},
             {"piece_id": concerto.id, "sort_order": 1},

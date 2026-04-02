@@ -1,3 +1,4 @@
+from loguru import logger
 from nicegui import ui
 
 from app.database import get_session
@@ -6,6 +7,7 @@ from app.services.concert_service import count_concerts, list_concerts
 
 
 def concerts_list_page() -> None:
+    logger.debug("Loading concerts list")
     session = get_session()
     state = {"search": "", "page": 0, "page_size": 50}
 
@@ -21,7 +23,7 @@ def concerts_list_page() -> None:
             {
                 "id": c.id,
                 "date": str(c.date),
-                "orchestra": c.orchestra,
+                "orchestra": c.orchestra.name if c.orchestra else "",
                 "choir": c.choir,
                 "venue": str(c.venue) if c.venue else "",
                 "conductor": c.conductor.full_name if c.conductor else "",
@@ -33,10 +35,12 @@ def concerts_list_page() -> None:
     def on_search(e):
         state["search"] = e.value or ""
         state["page"] = 0
+        logger.debug("Concert search: {!r}", state["search"])
         load()
 
     def on_row_click(e):
         concert_id = e.args["row"]["id"]
+        logger.debug("Navigating to concert id={}", concert_id)
         ui.navigate.to(f"/concerts/{concert_id}")
 
     with ui.row().classes("w-full items-center gap-4 mb-4"):
