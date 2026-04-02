@@ -1,8 +1,8 @@
 [project]
 name = "konzertkatalog"
-version = "0.2.0"
+version = "0.3.0"
 description = "Personal classical concert archive"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "loguru>=0.7.0",
     "nicegui>=3.9.0",
@@ -20,7 +20,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py314"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

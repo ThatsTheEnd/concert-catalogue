@@ -38,7 +38,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.13"
       - run: uv sync
       - name: Build (macOS)
         if: runner.os == 'macOS'
