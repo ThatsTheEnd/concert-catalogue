@@ -54,15 +54,10 @@ def nav_bar(current: str = "") -> None:
                 )
 
         with ui.row().classes("ml-auto items-center gap-3"):
-            search_box = (
-                ui.input(placeholder=t("search_placeholder"))
-                .classes("bg-white/10 text-white rounded px-2 py-1 text-sm w-44")
-                .props("borderless dense")
-            )
-            search_box.on(
-                "keydown.enter",
-                lambda e: ui.navigate.to(f"/search?q={search_box.value}"),
-            )
+            ui.button(
+                icon="search",
+                on_click=lambda: ui.navigate.to("/search"),
+            ).props("flat dense color=white").tooltip(t("search_heading"))
 
             # Language toggle — shows the language you'd switch TO
             def on_lang_toggle():
