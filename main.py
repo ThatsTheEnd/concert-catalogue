@@ -81,6 +81,25 @@ def nav_bar(current: str = "") -> None:
                 t("dark_mode")
             )
 
+            # Font size controls — persisted per user
+            font_size = app.storage.user.get("font_size", 16)
+            ui.query("body").style(f"font-size: {font_size}px")
+
+            def change_font_size(delta: int):
+                current = app.storage.user.get("font_size", 16)
+                new_size = max(12, min(24, current + delta))
+                app.storage.user["font_size"] = new_size
+                ui.query("body").style(f"font-size: {new_size}px")
+
+            ui.button(
+                icon="text_decrease",
+                on_click=lambda: change_font_size(-2),
+            ).props("flat dense color=white").tooltip(t("font_smaller"))
+            ui.button(
+                icon="text_increase",
+                on_click=lambda: change_font_size(2),
+            ).props("flat dense color=white").tooltip(t("font_larger"))
+
             # Info button — shows version and database location
             def on_info_click():
                 with ui.dialog() as dlg, ui.card().classes("min-w-[360px]"):

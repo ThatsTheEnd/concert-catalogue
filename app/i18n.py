@@ -95,6 +95,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Dark mode
         "dark_mode": "Dark mode",
         "light_mode": "Light mode",
+        "font_smaller": "Smaller text",
+        "font_larger": "Larger text",
         "language": "DE",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stop",
@@ -198,6 +200,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Dark mode
         "dark_mode": "Dunkelmodus",
         "light_mode": "Hellmodus",
+        "font_smaller": "Kleinere Schrift",
+        "font_larger": "Größere Schrift",
         "language": "EN",  # button shows what you'd switch TO
         # Stop app
         "stop_app": "Stopp",
