@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from nicegui import app, ui
@@ -77,15 +78,22 @@ def nav_bar(current: str = "") -> None:
             )
 
             # Stop application button
-            def on_stop_click():
+            async def on_stop_click():
                 with ui.dialog() as dlg, ui.card():
                     ui.label(t("stop_app_confirm")).classes("font-medium")
                     ui.label(t("stop_app_warning")).classes("text-sm text-gray-500")
                     with ui.row().classes("gap-2 mt-4"):
                         ui.button(t("cancel"), on_click=dlg.close).props("outline")
+
+                        async def do_stop():
+                            dlg.close()
+                            ui.navigate.to("/stopped")
+                            await asyncio.sleep(0.5)
+                            app.shutdown()
+
                         ui.button(
                             t("stop_app"),
-                            on_click=app.shutdown,
+                            on_click=do_stop,
                         ).props("color=negative")
                 dlg.open()
 
@@ -140,6 +148,50 @@ def page_search(q: str = ""):
     nav_bar()
     with ui.column().classes("w-full max-w-4xl mx-auto px-4 py-6"):
         search_page(query=q)
+
+
+@app.get("/stopped")
+def page_stopped():
+    from fastapi.responses import HTMLResponse
+
+    return HTMLResponse(
+        """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Application Stopped</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      background: #f9fafb;
+      color: #111827;
+    }
+    .card {
+      text-align: center;
+      padding: 2rem 3rem;
+      background: #fff;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+    .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+    p  { margin: 0; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">&#x23FC;</div>
+    <h1>Application Stopped</h1>
+    <p>The server has been shut down. You can close this tab.</p>
+  </div>
+</body>
+</html>"""
+    )
 
 
 if __name__ in ("__main__", "__mp_main__"):
