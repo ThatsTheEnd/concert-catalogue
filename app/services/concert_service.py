@@ -87,8 +87,8 @@ def _search_filter(search: str):
     )
 
 
-def _base_query(search: str = ""):
-    stmt = (
+def _joined_query():
+    return (
         select(Concert)
         .outerjoin(Concert.orchestra)
         .outerjoin(Concert.conductor)
@@ -100,6 +100,10 @@ def _base_query(search: str = ""):
         .outerjoin(Piece.composer)
         .distinct()
     )
+
+
+def _base_query(search: str = ""):
+    stmt = _joined_query()
     f = _search_filter(search)
     if f is not None:
         stmt = stmt.where(f)
@@ -129,6 +133,71 @@ def list_concerts(
 def count_concerts(session: Session, search: str = "") -> int:
     subq = _base_query(search).subquery()
     return session.scalar(select(func.count()).select_from(subq)) or 0
+
+
+def _filter_query(
+    *,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    piece_text: str = "",
+    composer_id: int | None = None,
+    conductor_id: int | None = None,
+    artist_id: int | None = None,
+    orchestra_id: int | None = None,
+    venue_id: int | None = None,
+):
+    stmt = _joined_query()
+    if date_from is not None:
+        stmt = stmt.where(Concert.date >= date_from)
+    if date_to is not None:
+        stmt = stmt.where(Concert.date <= date_to)
+    if piece_text:
+        stmt = stmt.where(Piece.title.ilike(f"%{piece_text}%"))
+    if composer_id is not None:
+        stmt = stmt.where(Composer.id == composer_id)
+    if conductor_id is not None:
+        stmt = stmt.where(Concert.conductor_id == conductor_id)
+    if artist_id is not None:
+        stmt = stmt.where(Artist.id == artist_id)
+    if orchestra_id is not None:
+        stmt = stmt.where(Concert.orchestra_id == orchestra_id)
+    if venue_id is not None:
+        stmt = stmt.where(Concert.venue_id == venue_id)
+    return stmt
+
+
+def filter_concerts(
+    session: Session,
+    *,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    piece_text: str = "",
+    composer_id: int | None = None,
+    conductor_id: int | None = None,
+    artist_id: int | None = None,
+    orchestra_id: int | None = None,
+    venue_id: int | None = None,
+) -> list[Concert]:
+    stmt = (
+        _filter_query(
+            date_from=date_from,
+            date_to=date_to,
+            piece_text=piece_text,
+            composer_id=composer_id,
+            conductor_id=conductor_id,
+            artist_id=artist_id,
+            orchestra_id=orchestra_id,
+            venue_id=venue_id,
+        )
+        .order_by(Concert.date.desc())
+        .limit(500)
+        .options(
+            joinedload(Concert.orchestra),
+            joinedload(Concert.venue),
+            joinedload(Concert.conductor),
+        )
+    )
+    return list(session.scalars(stmt).unique())
 
 
 def update_concert(session: Session, concert_id: int, **kwargs) -> Concert | None:
