@@ -525,17 +525,22 @@ def _pieces_panel(session, comp_refresh_hooks: list) -> None:
     def composer_options():
         return {c.id: c.full_name for c in list_composers(session)}
 
+    def catalogue_lookup():
+        return {c.id: c.catalogue for c in list_composers(session)}
+
     all_rows = rows()
     current_comp_opts = composer_options()
+    current_cat_lookup = catalogue_lookup()
 
     filter_inp = ui.input(placeholder=t("filter_placeholder")).classes("w-64 mb-2")
     table = ui.table(columns=columns, rows=all_rows, row_key="id").classes("w-full")
     _add_action_slot(table)
 
     def refresh():
-        nonlocal all_rows, current_comp_opts
+        nonlocal all_rows, current_comp_opts, current_cat_lookup
         all_rows = rows()
         current_comp_opts = composer_options()
+        current_cat_lookup = catalogue_lookup()
         table.rows = filter_rows(all_rows, filter_inp.value)
         comp_sel.options = current_comp_opts
         comp_sel.update()
@@ -612,7 +617,14 @@ def _pieces_panel(session, comp_refresh_hooks: list) -> None:
         )
         title_inp = ui.input(t("piece_title")).classes("w-60")
         key_inp = ui.input(t("key")).classes("w-32")
+        cat_prefix_label = ui.label("").classes("text-sm font-mono text-gray-500 min-w-[40px]")
         cat_inp = ui.input(t("catalogue_number")).classes("w-32")
+
+        def on_composer_change(e):
+            prefix = current_cat_lookup.get(e.value, "")
+            cat_prefix_label.set_text(prefix)
+
+        comp_sel.on_value_change(on_composer_change)
 
         def add():
             if comp_sel.value and title_inp.value:
@@ -629,6 +641,7 @@ def _pieces_panel(session, comp_refresh_hooks: list) -> None:
                 for inp in [title_inp, key_inp, cat_inp]:
                     inp.set_value("")
                 comp_sel.set_value(None)
+                cat_prefix_label.set_text("")
                 refresh()
 
         ui.button(t("add"), on_click=add).props("color=primary")

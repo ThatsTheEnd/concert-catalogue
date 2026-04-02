@@ -99,7 +99,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Stop app
         "stop_app": "Stop",
         "stop_app_confirm": "Stop the application?",
-        "stop_app_warning": "The server will shut down and you will lose access to the app.",
+        "stop_app_warning": "All data is saved and will be there again on next start.",
         # Info
         "info": "Info",
         "info_version": "Version",
@@ -202,7 +202,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         # Stop app
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",
-        "stop_app_warning": "Der Server wird heruntergefahren und du verlierst den Zugang zur App.",
+        "stop_app_warning": "Alle Daten sind gespeichert und werden beim nächsten Start wieder da sein.",
         # Info
         "info": "Info",
         "info_version": "Version",
