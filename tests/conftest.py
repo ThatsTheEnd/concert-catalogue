@@ -4,6 +4,11 @@ from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
 
+# Register the NiceGUI user-simulation pytest plugin so that the ``user``
+# fixture (defined in ``tests/e2e/conftest.py``) is available to all
+# end-to-end tests under ``tests/e2e/``.
+pytest_plugins = ["nicegui.testing.user_plugin"]
+
 
 @pytest.fixture
 def session():
