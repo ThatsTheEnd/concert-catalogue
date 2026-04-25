@@ -2,7 +2,7 @@ from datetime import date
 
 from loguru import logger
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session, aliased, joinedload
+from sqlalchemy.orm import Session, aliased, joinedload, selectinload
 
 from app.models import (
     Artist,
@@ -128,6 +128,7 @@ def list_concerts(
             joinedload(Concert.orchestra),
             joinedload(Concert.venue),
             joinedload(Concert.conductor),
+            selectinload(Concert.artist_links).joinedload(ConcertArtist.artist),
         )
     )
     return list(session.scalars(stmt).unique())

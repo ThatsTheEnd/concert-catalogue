@@ -26,6 +26,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "col_orchestra": "Orchestra",
         "col_venue": "Venue",
         "col_conductor": "Conductor",
+        "col_soloists": "Soloists",
+        "col_choir": "Choir",
         # Concert detail
         "conducted_by": "Conducted by",
         "choir": "Choir",
@@ -99,6 +101,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "search_piece_label": "Piece (title)",
         "conductor_label": "Conductor",
         "artist": "Artist",
+        # Settings dialog
+        "settings": "Settings",
+        "language_label": "Language",
+        "concert_columns": "Concert columns",
         # Dark mode
         "dark_mode": "Dark mode",
         "light_mode": "Light mode",
@@ -131,6 +137,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "col_orchestra": "Orchester",
         "col_venue": "Spielstätte",
         "col_conductor": "Dirigent",
+        "col_soloists": "Solisten",
+        "col_choir": "Chor",
         # Concert detail
         "conducted_by": "Dirigent",
         "choir": "Chor",
@@ -204,12 +212,16 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "search_piece_label": "Werk (Titel)",
         "conductor_label": "Dirigent",
         "artist": "Künstler",
+        # Settings dialog
+        "settings": "Einstellungen",
+        "language_label": "Sprache",
+        "concert_columns": "Konzertspalten",
         # Dark mode
         "dark_mode": "Dunkelmodus",
         "light_mode": "Hellmodus",
         "font_smaller": "Kleinere Schrift",
         "font_larger": "Größere Schrift",
-        "language": "DE", 
+        "language": "DE",
         # Stop app
         "stop_app": "Stopp",
         "stop_app_confirm": "Anwendung beenden?",

@@ -21,7 +21,9 @@
       "Bash(sqlite3 data/konzert.db \"SELECT * FROM orchestras;\")",
       "Bash(uv run *)",
       "Bash(kill %1)",
-      "Bash(rtk git *)"
+      "Bash(rtk git *)",
+      "WebFetch(domain:rtk-ai.github.io)",
+      "Bash(gh issue *)"
     ]
   }
 }
