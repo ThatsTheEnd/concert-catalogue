@@ -50,6 +50,31 @@ pianist can be recorded playing harpsichord at a different event.
 
 ---
 
+## [1.1.0] — 2026-04-25
+
+### Added
+
+- **Settings dialog** — a gear icon in the nav bar consolidates all user
+  preferences into a single dialog, replacing the separate language and dark-
+  mode buttons.
+  - Language toggle (EN/DE).
+  - Dark mode switch (takes effect immediately, no reload required).
+  - Concert column configuration: control which columns are visible and in what
+    order using checkboxes and up/down arrows. Preference is persisted in the
+    database and survives restarts.
+- **Soloists column** in the concert list — artists linked to a concert are now
+  shown in a dedicated Soloists column.
+- **Default column set** updated to match the requested layout: Date, Orchestra,
+  Conductor, Soloists, Venue. Choir is hidden by default but can be re-enabled
+  via the settings dialog.
+
+### Changed
+
+- `settings.value` column type widened from `VARCHAR(200)` to `TEXT` to
+  accommodate JSON payloads (column config).
+
+---
+
 ## [0.4.2] — 2026-04-02
 
 - End-to-end tests using NiceGUI's user simulation framework.

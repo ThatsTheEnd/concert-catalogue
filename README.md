@@ -4,9 +4,6 @@
 you have attended: programme, soloists, conductor, venue, and any attachments such as
 tickets or programme booklets.
 
-![KonzertKatalog concert list](docs/screenshot-concerts.png)
-<!-- Replace the placeholder above with an actual screenshot once taken -->
-
 ---
 
 ## Download & Install
@@ -103,7 +100,7 @@ concerts:
 - **Orchestras** – name and home city
 - **Venues** – name and city
 - **Composers** – name, birth/death years, and catalogue prefix (e.g. "KV" for Mozart)
-- **Conductors** and **Artists** (soloists) – name and nationality
+- **Artists** – name and default instrument (serves as both conductors and soloists)
 
 Entries can be added, edited, and deleted here or inline while filling in a concert
 form.
@@ -113,10 +110,14 @@ form.
 The search box in the navigation bar performs a full-text search across concerts,
 composers, conductors, artists, orchestras, and venues. Results are grouped by type.
 
-### Language & dark mode
+### Settings
 
-Use the toggle in the top-right corner to switch between **English** and **German**, or
-to enable **dark mode**. Your preference is remembered for the current browser session.
+Click the **gear icon** (⚙) in the top-right corner to open the settings dialog:
+
+- **Language** – switch between English and German
+- **Dark mode** – toggle light/dark theme (takes effect immediately)
+- **Concert columns** – choose which columns appear in the concert list and reorder
+  them with the arrow buttons. Your preferences are saved to the database.
 
 ---
 

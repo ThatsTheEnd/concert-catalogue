@@ -4,12 +4,28 @@ from nicegui import ui
 from app.database import get_session
 from app.i18n import t
 from app.services.concert_service import count_concerts, list_concerts
+from app.services.settings_service import get_concert_columns
+
+_COL_SORTABLE = {"date", "orchestra"}
 
 
 def concerts_list_page() -> None:
     logger.debug("Loading concerts list")
     session = get_session()
     ui.context.client.on_disconnect(session.close)
+
+    col_config = get_concert_columns(session)
+    columns = [
+        {
+            "name": cfg["name"],
+            "label": t(f"col_{cfg['name']}"),
+            "field": cfg["name"],
+            **({"sortable": True} if cfg["name"] in _COL_SORTABLE else {}),
+        }
+        for cfg in col_config
+        if cfg["visible"]
+    ]
+
     state = {"search": "", "page": 0, "page_size": 50}
 
     def load():
@@ -28,6 +44,7 @@ def concerts_list_page() -> None:
                 "choir": c.choir,
                 "venue": str(c.venue) if c.venue else "",
                 "conductor": c.conductor.full_name if c.conductor else "",
+                "soloists": ", ".join(link.artist.full_name for link in c.artist_links),
             }
             for c in concerts
         ]
@@ -54,14 +71,6 @@ def concerts_list_page() -> None:
         ui.button(t("add_concert"), on_click=lambda: ui.navigate.to("/concerts/new")).props(
             "color=primary"
         )
-
-    columns = [
-        {"name": "date", "label": t("col_date"), "field": "date", "sortable": True},
-        {"name": "orchestra", "label": t("col_orchestra"), "field": "orchestra", "sortable": True},
-        {"name": "choir", "label": t("choir"), "field": "choir"},
-        {"name": "venue", "label": t("col_venue"), "field": "venue"},
-        {"name": "conductor", "label": t("col_conductor"), "field": "conductor"},
-    ]
 
     table = ui.table(columns=columns, rows=[], row_key="id").classes("w-full cursor-pointer")
     table.on("rowClick", on_row_click)

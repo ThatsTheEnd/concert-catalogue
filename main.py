@@ -8,7 +8,12 @@ from nicegui import app, native, ui
 
 from app.database import DB_PATH, create_session_factory, get_schema_backup, get_session
 from app.i18n import set_lang, t
-from app.services.settings_service import get_all_settings, set_setting
+from app.services.settings_service import (
+    get_all_settings,
+    get_concert_columns,
+    set_concert_columns,
+    set_setting,
+)
 from app.storage.file_handler import UPLOADS_ROOT
 from app.version import get_version
 from app.views.concert_detail import concert_detail_page
@@ -81,29 +86,84 @@ def nav_bar(current: str = "") -> None:
                 on_click=lambda: ui.navigate.to("/search"),
             ).props("flat dense color=white").tooltip(t("search_heading"))
 
-            # Language toggle — shows the language you'd switch TO
-            def on_lang_toggle():
-                new_lang = "de" if settings["lang"] == "en" else "en"
-                set_setting(session, "lang", new_lang)
-                ui.navigate.reload()
+            # Settings dialog — language, dark mode, concert columns
+            def open_settings():
+                col_config = get_concert_columns(session)
+
+                with ui.dialog() as dlg, ui.card().classes("min-w-[420px]"):
+                    ui.label(t("settings")).classes("text-lg font-bold mb-4")
+
+                    # Language
+                    with ui.row().classes("items-center justify-between mb-2"):
+                        ui.label(t("language_label")).classes("text-sm")
+                        def on_lang():
+                            new_lang = "de" if settings["lang"] == "en" else "en"
+                            set_setting(session, "lang", new_lang)
+                            ui.navigate.reload()
+                        ui.button(t("language"), on_click=on_lang).props("outline dense").classes("text-xs font-mono")
+
+                    # Dark mode
+                    with ui.row().classes("items-center justify-between mb-4"):
+                        ui.label(t("dark_mode")).classes("text-sm")
+                        def on_dark_switch(e):
+                            set_setting(session, "dark_mode", str(e.value).lower())
+                            dark.set_value(e.value)
+                        ui.switch(value=settings["dark_mode"] == "true", on_change=on_dark_switch)
+
+                    ui.separator().classes("my-2")
+                    ui.label(t("concert_columns")).classes("font-medium mt-1 mb-2 text-sm")
+
+                    col_list = ui.column().classes("gap-0.5 w-full")
+
+                    def render_col_list():
+                        col_list.clear()
+                        with col_list:
+                            for i, col in enumerate(col_config):
+                                with ui.row().classes("items-center gap-1 w-full py-0.5"):
+                                    ui.checkbox(
+                                        value=col["visible"],
+                                        on_change=lambda e, idx=i: toggle_vis(idx, e.value),
+                                    )
+                                    ui.label(t(f"col_{col['name']}")).classes("flex-1 text-sm")
+                                    up = ui.button(
+                                        icon="arrow_upward",
+                                        on_click=lambda idx=i: move_col(idx, -1),
+                                    ).props("flat dense size=sm")
+                                    dn = ui.button(
+                                        icon="arrow_downward",
+                                        on_click=lambda idx=i: move_col(idx, 1),
+                                    ).props("flat dense size=sm")
+                                    if i == 0:
+                                        up.props(add="disabled")
+                                    if i == len(col_config) - 1:
+                                        dn.props(add="disabled")
+
+                    def toggle_vis(idx, value):
+                        col_config[idx]["visible"] = value
+
+                    def move_col(idx, direction):
+                        new_idx = idx + direction
+                        if 0 <= new_idx < len(col_config):
+                            col_config[idx], col_config[new_idx] = col_config[new_idx], col_config[idx]
+                            render_col_list()
+
+                    render_col_list()
+
+                    ui.separator().classes("my-3")
+                    with ui.row().classes("gap-2 justify-end"):
+                        ui.button(t("cancel"), on_click=dlg.close).props("outline")
+                        def save_settings():
+                            set_concert_columns(session, col_config)
+                            dlg.close()
+                            ui.navigate.reload()
+                        ui.button(t("save"), on_click=save_settings).props("color=primary")
+
+                dlg.open()
 
             ui.button(
-                t("language"),
-                on_click=on_lang_toggle,
-            ).props("flat dense color=white").classes("text-xs font-mono")
-
-            # Dark/light mode toggle
-            def on_dark_toggle():
-                new_val = settings["dark_mode"] != "true"
-                set_setting(session, "dark_mode", str(new_val).lower())
-                dark.set_value(new_val)
-
-            ui.button(
-                icon="dark_mode",
-                on_click=on_dark_toggle,
-            ).props("flat dense color=white").tooltip(
-                t("dark_mode")
-            )
+                icon="settings",
+                on_click=open_settings,
+            ).props("flat dense color=white").tooltip(t("settings"))
 
             # Info button — shows version and database location
             def on_info_click():
