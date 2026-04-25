@@ -7,7 +7,7 @@ from app.database import get_session
 from app.i18n import t
 from app.services.concert_service import filter_concerts
 from app.services.orchestra_service import list_orchestras
-from app.services.person_service import list_artists, list_composers, list_conductors
+from app.services.person_service import list_artists, list_composers
 from app.services.venue_service import list_venues
 
 
@@ -23,8 +23,15 @@ def search_page(query: str = "") -> None:
     ui.context.client.on_disconnect(session.close)
 
     composers = {None: "—", **{c.id: c.full_name for c in list_composers(session)}}
-    conductors = {None: "—", **{c.id: c.full_name for c in list_conductors(session)}}
-    artists = {None: "—", **{a.id: f"{a.full_name} ({a.instrument})" for a in list_artists(session)}}
+    _all_artists = list_artists(session)
+    conductors = {None: "—", **{a.id: a.full_name for a in _all_artists}}
+    artists = {
+        None: "—",
+        **{
+            a.id: f"{a.full_name} ({a.default_instrument})" if a.default_instrument else a.full_name
+            for a in _all_artists
+        },
+    }
     orchestras = {None: "—", **{o.id: o.name for o in list_orchestras(session)}}
     venues = {None: "—", **{v.id: str(v) for v in list_venues(session)}}
 
@@ -37,7 +44,10 @@ def search_page(query: str = "") -> None:
             piece_input = ui.input(t("search_piece_label"), value=query).classes("w-full")
         with ui.grid(columns=3).classes("w-full gap-4 mt-2"):
             composer_sel = ui.select(composers, label=t("composer"), value=None, with_input=True).classes("w-full")
-            conductor_sel = ui.select(conductors, label=t("conductor_label"), value=None, with_input=True).classes("w-full")
+            conductor_sel = (
+                ui.select(conductors, label=t("conductor_label"), value=None, with_input=True)
+                .classes("w-full")
+            )
             orchestra_sel = ui.select(orchestras, label=t("orchestra"), value=None, with_input=True).classes("w-full")
         with ui.grid(columns=2).classes("w-full gap-4 mt-2"):
             artist_sel = ui.select(artists, label=t("artist"), value=None, with_input=True).classes("w-full")

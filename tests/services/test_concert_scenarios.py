@@ -11,7 +11,7 @@ from datetime import date
 from app.models import Artist, Composer, Piece
 from app.services.concert_service import create_concert, get_concert, update_concert
 from app.services.orchestra_service import create_orchestra
-from app.services.person_service import create_conductor, search_conductors
+from app.services.person_service import create_artist, search_artists
 
 
 def test_concert_without_conductor_chamber_orchestra(session):
@@ -31,9 +31,9 @@ def test_concert_without_conductor_chamber_orchestra(session):
 
 def test_concert_with_multiple_soloists(session):
     """Bug scenario: adding more than one soloist/artist to a concert."""
-    a1 = Artist(first_name="Anne-Sophie", last_name="Mutter", instrument="Violin")
-    a2 = Artist(first_name="Yo-Yo", last_name="Ma", instrument="Cello")
-    a3 = Artist(first_name="Lang", last_name="Lang", instrument="Piano")
+    a1 = Artist(first_name="Anne-Sophie", last_name="Mutter", default_instrument="Violin")
+    a2 = Artist(first_name="Yo-Yo", last_name="Ma", default_instrument="Cello")
+    a3 = Artist(first_name="Lang", last_name="Lang", default_instrument="Piano")
     session.add_all([a1, a2, a3])
     session.flush()
 
@@ -59,8 +59,8 @@ def test_concert_with_multiple_soloists(session):
 
 def test_concert_with_choir_and_director(session):
     """Concert with choir name and a choir director (separate from main conductor)."""
-    conductor = create_conductor(session, first_name="Simon", last_name="Rattle")
-    choir_dir = create_conductor(session, first_name="Simon", last_name="Halsey")
+    conductor = create_artist(session, first_name="Simon", last_name="Rattle")
+    choir_dir = create_artist(session, first_name="Simon", last_name="Halsey")
 
     orch = create_orchestra(session, name="Berliner Philharmoniker")
     concert = create_concert(
@@ -96,27 +96,27 @@ def test_concert_with_choir_no_director(session):
 
 
 def test_conductor_search_for_autocomplete(session):
-    """Bug scenario: conductor dropdown search returns filtered results."""
-    create_conductor(session, first_name="Carlos", last_name="Kleiber")
-    create_conductor(session, first_name="Carlos", last_name="Kleiber")  # duplicate ok
-    create_conductor(session, first_name="Daniel", last_name="Barenboim")
-    create_conductor(session, first_name="Claudio", last_name="Abbado")
+    """Conductor/artist search returns filtered results for autocomplete."""
+    create_artist(session, first_name="Carlos", last_name="Kleiber")
+    create_artist(session, first_name="Carlos", last_name="Kleiber")  # duplicate ok
+    create_artist(session, first_name="Daniel", last_name="Barenboim")
+    create_artist(session, first_name="Claudio", last_name="Abbado")
 
-    results = search_conductors(session, "Kleiber")
+    results = search_artists(session, "Kleiber")
     assert len(results) == 2
     assert all(c.last_name == "Kleiber" for c in results)
 
-    results = search_conductors(session, "bar")  # case-insensitive
+    results = search_artists(session, "bar")  # case-insensitive
     assert any(c.last_name == "Barenboim" for c in results)
 
-    results = search_conductors(session, "xyz")
+    results = search_artists(session, "xyz")
     assert len(results) == 0
 
 
 def test_concert_update_persists_choir_and_soloists(session):
     """Updating a concert correctly replaces choir and soloist data."""
-    conductor = create_conductor(session, first_name="Kent", last_name="Nagano")
-    artist = Artist(first_name="Elina", last_name="Garanca", instrument="Mezzo-soprano")
+    conductor = create_artist(session, first_name="Kent", last_name="Nagano")
+    artist = Artist(first_name="Elina", last_name="Garanca", default_instrument="Mezzo-soprano")
     session.add(artist)
     session.flush()
 

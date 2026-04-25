@@ -1,17 +1,16 @@
 """Shared helpers for e2e tests.
 
 The reference-data page uses ``ui.tab_panel`` containers for each entity type.
-All six panels are rendered in the DOM at all times (NiceGUI's tab panels do not
+All five panels are rendered in the DOM at all times (NiceGUI's tab panels do not
 set ``visible=False`` on inactive panels), so we must scope ``ElementFilter``
 queries to the specific panel index rather than relying on ``only_visible=True``.
 
 Panel order (matches the order in ``reference_data_page()``):
   0 – Orchestras
   1 – Composers
-  2 – Conductors
-  3 – Artists
-  4 – Pieces
-  5 – Venues
+  2 – Artists
+  3 – Pieces
+  4 – Venues
 """
 
 from __future__ import annotations
@@ -27,10 +26,9 @@ from nicegui.testing import User, UserInteraction
 
 PANEL_ORCHESTRAS = 0
 PANEL_COMPOSERS = 1
-PANEL_CONDUCTORS = 2
-PANEL_ARTISTS = 3
-PANEL_PIECES = 4
-PANEL_VENUES = 5
+PANEL_ARTISTS = 2
+PANEL_PIECES = 3
+PANEL_VENUES = 4
 
 
 # ---------------------------------------------------------------------------

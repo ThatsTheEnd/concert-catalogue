@@ -1,9 +1,9 @@
 """E2E tests for the Reference Data page.
 
 Covers add and delete for every entity type exposed by the
-``/reference`` page: Orchestras, Composers, Conductors, Artists,
-Pieces, and Venues.  Every test works against an isolated per-test
-copy of ``data/konzert.db``, so mutations do not bleed between runs.
+``/reference`` page: Orchestras, Composers, Artists, Pieces, and Venues.
+Every test works against an isolated per-test copy of ``data/konzert.db``,
+so mutations do not bleed between runs.
 """
 
 from nicegui.testing import User
@@ -11,7 +11,6 @@ from nicegui.testing import User
 from .helpers import (
     PANEL_ARTISTS,
     PANEL_COMPOSERS,
-    PANEL_CONDUCTORS,
     PANEL_ORCHESTRAS,
     PANEL_PIECES,
     PANEL_VENUES,
@@ -100,63 +99,24 @@ async def test_delete_composer(user: User) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Conductors
-# ---------------------------------------------------------------------------
-
-
-async def test_add_conductor(user: User) -> None:
-    """Adding a conductor persists first and last name."""
-    await user.open('/reference')
-    click_tab(user, 'Conductors')
-
-    before = get_table_rows(user, PANEL_CONDUCTORS)
-    type_in_panel_input(user, PANEL_CONDUCTORS, 'First name', 'Simon')
-    type_in_panel_input(user, PANEL_CONDUCTORS, 'Last name', 'Rattle')
-    click_add_in_panel(user, PANEL_CONDUCTORS)
-
-    after = get_table_rows(user, PANEL_CONDUCTORS)
-    assert len(after) == len(before) + 1
-    assert any(r['last_name'] == 'Rattle' for r in after)
-
-
-async def test_delete_conductor(user: User) -> None:
-    """Deleting a conductor removes it from the table."""
-    await user.open('/reference')
-    click_tab(user, 'Conductors')
-
-    type_in_panel_input(user, PANEL_CONDUCTORS, 'First name', 'Del')
-    type_in_panel_input(user, PANEL_CONDUCTORS, 'Last name', 'Conductor')
-    click_add_in_panel(user, PANEL_CONDUCTORS)
-
-    before = get_table_rows(user, PANEL_CONDUCTORS)
-    row = next(r for r in before if r['last_name'] == 'Conductor')
-
-    trigger_delete_row(user, PANEL_CONDUCTORS, row)
-    confirm_delete(user)
-
-    after = get_table_rows(user, PANEL_CONDUCTORS)
-    assert not any(r['last_name'] == 'Conductor' for r in after)
-
-
-# ---------------------------------------------------------------------------
 # Artists
 # ---------------------------------------------------------------------------
 
 
 async def test_add_artist(user: User) -> None:
-    """Adding an artist persists name and instrument."""
+    """Adding an artist persists name and default instrument."""
     await user.open('/reference')
     click_tab(user, 'Artists')
 
     before = get_table_rows(user, PANEL_ARTISTS)
     type_in_panel_input(user, PANEL_ARTISTS, 'First name', 'Hilary')
     type_in_panel_input(user, PANEL_ARTISTS, 'Last name', 'Hahn')
-    type_in_panel_input(user, PANEL_ARTISTS, 'Instrument', 'Violin')
+    type_in_panel_input(user, PANEL_ARTISTS, 'Default instrument', 'Violin')
     click_add_in_panel(user, PANEL_ARTISTS)
 
     after = get_table_rows(user, PANEL_ARTISTS)
     assert len(after) == len(before) + 1
-    assert any(r['last_name'] == 'Hahn' and r['instrument'] == 'Violin' for r in after)
+    assert any(r['last_name'] == 'Hahn' and r['default_instrument'] == 'Violin' for r in after)
 
 
 async def test_delete_artist(user: User) -> None:
@@ -166,7 +126,7 @@ async def test_delete_artist(user: User) -> None:
 
     type_in_panel_input(user, PANEL_ARTISTS, 'First name', 'Del')
     type_in_panel_input(user, PANEL_ARTISTS, 'Last name', 'Artist')
-    type_in_panel_input(user, PANEL_ARTISTS, 'Instrument', 'Piccolo')
+    type_in_panel_input(user, PANEL_ARTISTS, 'Default instrument', 'Piccolo')
     click_add_in_panel(user, PANEL_ARTISTS)
 
     before = get_table_rows(user, PANEL_ARTISTS)

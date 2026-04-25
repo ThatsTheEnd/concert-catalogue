@@ -1,11 +1,12 @@
 import asyncio
+import os
 import webbrowser
 from multiprocessing import freeze_support
 
 from loguru import logger
 from nicegui import app, native, ui
 
-from app.database import DB_PATH, create_session_factory, get_session
+from app.database import DB_PATH, create_session_factory, get_schema_backup, get_session
 from app.i18n import set_lang, t
 from app.services.settings_service import get_all_settings, set_setting
 from app.storage.file_handler import UPLOADS_ROOT
@@ -22,6 +23,27 @@ __version__ = get_version()
 create_session_factory()
 UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
 app.add_static_files("/uploads", str(UPLOADS_ROOT))
+
+_schema_warning_shown = False
+
+
+def _show_schema_backup_warning() -> None:
+    """Show a one-time popup if the DB was backed up due to a schema change."""
+    global _schema_warning_shown
+    backup = get_schema_backup()
+    if not backup or _schema_warning_shown:
+        return
+    _schema_warning_shown = True
+    with ui.dialog() as dlg, ui.card().classes("min-w-[440px]"):
+        ui.label("Database updated").classes("text-lg font-bold mb-2")
+        ui.label(
+            "The database schema has changed. Your existing database was incompatible "
+            "and has been backed up automatically. A fresh database has been created."
+        ).classes("text-sm mb-3")
+        ui.label("Backup location:").classes("text-xs text-gray-500 font-medium")
+        ui.label(str(backup)).classes("text-xs font-mono text-gray-500 break-all mb-4")
+        ui.button("OK", on_click=dlg.close).props("color=primary")
+    dlg.open()
 
 
 _NAV_TAB_ACTIVE = (
@@ -130,6 +152,8 @@ def nav_bar(current: str = "") -> None:
                 on_click=on_stop_click,
             ).props("flat dense color=white").tooltip(t("stop_app"))
 
+    _show_schema_backup_warning()
+
 
 @ui.page("/")
 def root():
@@ -226,7 +250,8 @@ if __name__ in ("__main__", "__mp_main__"):
     freeze_support()
     logger.info("Starting KonzertKatalog v{} — DB at {}", __version__, DB_PATH)
     port = native.find_open_port()
-    app.on_startup(lambda: webbrowser.open(f"http://127.0.0.1:{port}"))
+    if "PYTEST_CURRENT_TEST" not in os.environ:
+        app.on_startup(lambda: webbrowser.open(f"http://127.0.0.1:{port}"))
     ui.run(
         title="KonzertKatalog",
         port=port,

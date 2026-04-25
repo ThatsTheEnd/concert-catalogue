@@ -54,9 +54,10 @@ def concert_detail_page(concert_id: int) -> None:
         ui.label(t("soloists")).classes("text-lg font-semibold mt-4 mb-1")
         for link in concert.artist_links:
             role = f" — {link.role}" if link.role else ""
+            instr = f" ({link.instrument})" if link.instrument else ""
             with ui.row().classes("items-center gap-2"):
                 ui.icon("person").classes("text-gray-400 text-base")
-                ui.label(f"{link.artist.full_name}{role} ({link.artist.instrument})")
+                ui.label(f"{link.artist.full_name}{role}{instr}")
 
     # ── Program ──────────────────────────────────────────────────────────────
     if concert.piece_links:

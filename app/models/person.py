@@ -6,32 +6,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
-class Conductor(Base):
-    __tablename__ = "conductors"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    first_name: Mapped[str] = mapped_column(String(100), default="")
-    last_name: Mapped[str] = mapped_column(String(100))
-
-    concerts: Mapped[list[Concert]] = relationship(
-        back_populates="conductor", foreign_keys="[Concert.conductor_id]"
-    )
-
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}".strip()
-
-    def __repr__(self) -> str:
-        return self.full_name
-
-
 class Artist(Base):
     __tablename__ = "artists"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     first_name: Mapped[str] = mapped_column(String(100), default="")
     last_name: Mapped[str] = mapped_column(String(100))
-    instrument: Mapped[str] = mapped_column(String(100), default="")
+    default_instrument: Mapped[str | None] = mapped_column(String(100), default=None)
 
     concert_links: Mapped[list[ConcertArtist]] = relationship(back_populates="artist")
 

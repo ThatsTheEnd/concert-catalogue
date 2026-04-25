@@ -6,7 +6,22 @@
       "Bash(uv run:*)",
       "Bash(python -c \"import nicegui; print\\(nicegui.__version__\\)\")",
       "Bash(cat .venv/lib/python3.14/site-packages/nicegui-*.dist-info/METADATA)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(rtk gh *)",
+      "WebFetch(domain:github.com)",
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk find *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(sqlite3 data/konzert.db \".tables\")",
+      "Bash(sqlite3 data/konzert.db \"SELECT * FROM conductors;\")",
+      "Bash(sqlite3 data/konzert.db \"SELECT * FROM artists;\")",
+      "Bash(sqlite3 data/konzert.db \"SELECT * FROM concerts;\")",
+      "Bash(sqlite3 data/konzert.db \"SELECT * FROM orchestras;\")",
+      "Bash(uv run *)",
+      "Bash(kill %1)",
+      "Bash(rtk git *)"
     ]
   }
 }
