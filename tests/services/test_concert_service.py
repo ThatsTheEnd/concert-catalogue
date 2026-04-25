@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.models import Artist, Composer, Conductor, Piece, Venue
+from app.models import Artist, Composer, Piece, Venue
 from app.services.concert_service import (
     create_concert,
     delete_concert,
@@ -16,12 +16,12 @@ from app.services.orchestra_service import create_orchestra
 @pytest.fixture
 def seed(session):
     venue = Venue(name="Elbphilharmonie", city="Hamburg")
-    conductor = Conductor(first_name="Kent", last_name="Nagano")
+    conductor = Artist(first_name="Kent", last_name="Nagano")
     composer = Composer(first_name="Gustav", last_name="Mahler")
     session.add_all([venue, conductor, composer])
     session.flush()
     piece = Piece(composer_id=composer.id, title="Symphony No. 2")
-    artist = Artist(first_name="Elina", last_name="Garanca", instrument="Mezzo-soprano")
+    artist = Artist(first_name="Elina", last_name="Garanca", default_instrument="Mezzo-soprano")
     session.add_all([piece, artist])
     session.commit()
     return {

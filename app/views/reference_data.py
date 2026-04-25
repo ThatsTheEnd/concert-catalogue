@@ -15,16 +15,12 @@ from app.services.orchestra_service import (
 from app.services.person_service import (
     create_artist,
     create_composer,
-    create_conductor,
     delete_artist,
     delete_composer,
-    delete_conductor,
     list_artists,
     list_composers,
-    list_conductors,
     update_artist,
     update_composer,
-    update_conductor,
 )
 from app.services.piece_service import create_piece, delete_piece, list_pieces, update_piece
 from app.services.venue_service import create_venue, delete_venue, list_venues, update_venue
@@ -42,7 +38,6 @@ def reference_data_page() -> None:
     with ui.tabs() as tabs:
         tab_orchestras = ui.tab(t("orchestras"))
         tab_composers = ui.tab(t("composers"))
-        tab_conductors = ui.tab(t("conductors"))
         tab_artists = ui.tab(t("artists"))
         tab_pieces = ui.tab(t("pieces"))
         tab_venues = ui.tab(t("venue"))
@@ -52,8 +47,6 @@ def reference_data_page() -> None:
             _orchestras_panel(session)
         with ui.tab_panel(tab_composers):
             _composers_panel(session, comp_refresh_hooks)
-        with ui.tab_panel(tab_conductors):
-            _conductors_panel(session)
         with ui.tab_panel(tab_artists):
             _artists_panel(session)
         with ui.tab_panel(tab_pieces):
@@ -304,100 +297,6 @@ def _composers_panel(session, comp_refresh_hooks: list) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Conductors
-# ---------------------------------------------------------------------------
-
-def _conductors_panel(session) -> None:
-    columns = [
-        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
-        {"name": "actions", "label": "", "field": "id", "align": "right"},
-    ]
-
-    def rows():
-        return [
-            {"id": c.id, "last_name": c.last_name, "first_name": c.first_name}
-            for c in list_conductors(session)
-        ]
-
-    all_rows = rows()
-
-    filter_inp = ui.input(placeholder=t("filter_placeholder")).classes("w-64 mb-2")
-    table = ui.table(columns=columns, rows=all_rows, row_key="id").classes("w-full")
-    _add_action_slot(table)
-
-    def refresh():
-        nonlocal all_rows
-        all_rows = rows()
-        table.rows = filter_rows(all_rows, filter_inp.value)
-
-    def on_filter(e):
-        table.rows = filter_rows(all_rows, e.value)
-
-    filter_inp.on_value_change(on_filter)
-
-    # ---- Edit dialog ----
-    edit_id: list[int] = [0]
-    with ui.dialog() as edit_dlg, ui.card().classes("min-w-72"):
-        ui.label(t("edit")).classes("text-base font-medium mb-2")
-        e_fn = ui.input(t("first_name")).classes("w-full")
-        e_ln = ui.input(t("last_name")).classes("w-full")
-
-        def save_edit():
-            update_conductor(session, edit_id[0], first_name=e_fn.value, last_name=e_ln.value)
-            refresh()
-            edit_dlg.close()
-
-        with ui.row().classes("mt-3 gap-2 justify-end"):
-            ui.button(t("save"), on_click=save_edit).props("color=primary")
-            ui.button(t("cancel"), on_click=edit_dlg.close).props("flat")
-
-    def on_edit(e):
-        row = e.args
-        edit_id[0] = row["id"]
-        e_fn.set_value(row["first_name"])
-        e_ln.set_value(row["last_name"])
-        edit_dlg.open()
-
-    table.on("edit_row", on_edit)
-
-    # ---- Delete dialog ----
-    delete_id: list[int] = [0]
-
-    def do_delete():
-        try:
-            delete_conductor(session, delete_id[0])
-            refresh()
-            delete_dlg.close()
-        except IntegrityError:
-            session.rollback()
-            delete_dlg.close()
-            ui.notify(t("delete_ref_error"), type="negative")
-
-    delete_dlg = _delete_dialog(do_delete)
-
-    def on_delete(e):
-        delete_id[0] = e.args["id"]
-        delete_dlg.open()
-
-    table.on("delete_row", on_delete)
-
-    # ---- Add form ----
-    with ui.row().classes("mt-2 gap-2"):
-        fn = ui.input(t("first_name")).classes("w-40")
-        ln = ui.input(t("last_name")).classes("w-40")
-
-        def add():
-            logger.info("UI: adding conductor {} {}", fn.value, ln.value)
-            create_conductor(session, first_name=fn.value, last_name=ln.value)
-            fn.set_value("")
-            ln.set_value("")
-            refresh()
-
-        ui.button(t("add"), on_click=add).props("color=primary")
-
-
-# ---------------------------------------------------------------------------
 # Artists
 # ---------------------------------------------------------------------------
 
@@ -405,7 +304,7 @@ def _artists_panel(session) -> None:
     columns = [
         {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
         {"name": "first_name", "label": t("first_name"), "field": "first_name"},
-        {"name": "instrument", "label": t("instrument"), "field": "instrument"},
+        {"name": "default_instrument", "label": t("default_instrument"), "field": "default_instrument"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 
@@ -413,7 +312,7 @@ def _artists_panel(session) -> None:
         return [
             {
                 "id": a.id, "last_name": a.last_name,
-                "first_name": a.first_name, "instrument": a.instrument,
+                "first_name": a.first_name, "default_instrument": a.default_instrument or "",
             }
             for a in list_artists(session)
         ]
@@ -440,12 +339,13 @@ def _artists_panel(session) -> None:
         ui.label(t("edit")).classes("text-base font-medium mb-2")
         e_fn = ui.input(t("first_name")).classes("w-full")
         e_ln = ui.input(t("last_name")).classes("w-full")
-        e_instr = ui.input(t("instrument")).classes("w-full")
+        e_instr = ui.input(t("default_instrument")).classes("w-full")
 
         def save_edit():
             update_artist(
                 session, edit_id[0],
-                first_name=e_fn.value, last_name=e_ln.value, instrument=e_instr.value,
+                first_name=e_fn.value, last_name=e_ln.value,
+                default_instrument=e_instr.value or None,
             )
             refresh()
             edit_dlg.close()
@@ -459,7 +359,7 @@ def _artists_panel(session) -> None:
         edit_id[0] = row["id"]
         e_fn.set_value(row["first_name"])
         e_ln.set_value(row["last_name"])
-        e_instr.set_value(row["instrument"])
+        e_instr.set_value(row["default_instrument"])
         edit_dlg.open()
 
     table.on("edit_row", on_edit)
@@ -489,11 +389,16 @@ def _artists_panel(session) -> None:
     with ui.row().classes("mt-2 gap-2"):
         fn = ui.input(t("first_name")).classes("w-40")
         ln = ui.input(t("last_name")).classes("w-40")
-        instr = ui.input(t("instrument")).classes("w-40")
+        instr = ui.input(t("default_instrument")).classes("w-40")
 
         def add():
             logger.info("UI: adding artist {} {} ({})", fn.value, ln.value, instr.value)
-            create_artist(session, first_name=fn.value, last_name=ln.value, instrument=instr.value)
+            create_artist(
+                session,
+                first_name=fn.value,
+                last_name=ln.value,
+                default_instrument=instr.value or None,
+            )
             for inp in [fn, ln, instr]:
                 inp.set_value("")
             refresh()

@@ -8,7 +8,7 @@ from app.i18n import t
 from app.models.attachment import Attachment
 from app.services.concert_service import create_concert, get_concert, update_concert
 from app.services.orchestra_service import list_orchestras
-from app.services.person_service import list_artists, list_conductors
+from app.services.person_service import list_artists
 from app.services.piece_service import search_pieces
 from app.services.venue_service import list_venues
 from app.storage.file_handler import save_upload
@@ -21,9 +21,13 @@ def concert_form_page(concert_id: int | None = None) -> None:
     is_edit = existing is not None
 
     # Pre-load reference data for autocomplete selects
-    all_conductors = {c.id: c.full_name for c in list_conductors(session)}
-    all_conductors_with_none = {None: "—", **all_conductors}
-    all_artists = {a.id: f"{a.full_name} ({a.instrument})" for a in list_artists(session)}
+    _all_artists_raw = list_artists(session)
+    all_people_with_none = {None: "—", **{a.id: a.full_name for a in _all_artists_raw}}
+    all_artists = {
+        a.id: f"{a.full_name} ({a.default_instrument})" if a.default_instrument else a.full_name
+        for a in _all_artists_raw
+    }
+    artist_defaults = {a.id: a.default_instrument or "" for a in _all_artists_raw}
     all_orchestras = {o.id: o.name for o in list_orchestras(session)}
     all_orchestras_with_none = {None: "—", **all_orchestras}
     all_venues = {v.id: str(v) for v in list_venues(session)}
@@ -47,7 +51,12 @@ def concert_form_page(concert_id: int | None = None) -> None:
             for lnk in (existing.piece_links if existing else [])
         ],
         "artists": [
-            {"artist_id": lnk.artist_id, "role": lnk.role, "_label": lnk.artist.full_name}
+            {
+                "artist_id": lnk.artist_id,
+                "role": lnk.role,
+                "instrument": lnk.instrument or "",
+                "_label": lnk.artist.full_name,
+            }
             for lnk in (existing.artist_links if existing else [])
         ],
         "new_attachments": [],
@@ -82,7 +91,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
     # ── Conductor ────────────────────────────────────────────────────────────
     ui.label(t("conductor")).classes("font-medium mt-4")
     conductor_select = ui.select(
-        options=all_conductors_with_none,
+        options=all_people_with_none,
         label=t("search_conductor"),
         value=form["conductor_id"],
         with_input=True,
@@ -95,7 +104,7 @@ def concert_form_page(concert_id: int | None = None) -> None:
         with ui.grid(columns=2).classes("w-full gap-4"):
             ui.input(t("choir_name"), value=form["choir"]).bind_value(form, "choir")
             choir_dir_select = ui.select(
-                options=all_conductors_with_none,
+                options=all_people_with_none,
                 label=t("choir_director_label"),
                 value=form["choir_director_id"],
                 with_input=True,
@@ -188,9 +197,13 @@ def concert_form_page(concert_id: int | None = None) -> None:
             for i, item in enumerate(form["artists"]):
                 with ui.row().classes("items-center gap-2 w-full"):
                     ui.label(item["_label"]).classes("flex-1 text-sm")
-                    ui.input(t("role_instrument"), value=item["role"]).classes("w-40").on(
+                    ui.input(t("role"), value=item.get("role", "")).classes("w-28").on(
                         "update:model-value",
                         lambda e, idx=i: form["artists"][idx].__setitem__("role", e.args),
+                    )
+                    ui.input(t("instrument"), value=item.get("instrument", "")).classes("w-28").on(
+                        "update:model-value",
+                        lambda e, idx=i: form["artists"][idx].__setitem__("instrument", e.args),
                     )
                     ui.button(
                         icon="delete",
@@ -211,12 +224,14 @@ def concert_form_page(concert_id: int | None = None) -> None:
 
         def add_artist():
             aid = artist_add_select.value
-            label = all_artists.get(aid, "")
-            if aid and label:
+            if aid and aid in artist_defaults:
                 logger.debug("Adding artist id={} to concert form", aid)
-                # Show only name (strip instrument hint) in the row
-                name_only = label.split(" (")[0]
-                form["artists"].append({"artist_id": aid, "role": "", "_label": name_only})
+                form["artists"].append({
+                    "artist_id": aid,
+                    "role": "",
+                    "instrument": artist_defaults[aid],
+                    "_label": all_artists.get(aid, "").split(" (")[0],
+                })
                 artist_add_select.set_value(None)
                 render_artist_rows()
 
@@ -265,7 +280,11 @@ def _save(form: dict, concert_id: int | None, session, is_edit: bool) -> None:
         for i, item in enumerate(form["pieces"])
     ]
     artists = [
-        {"artist_id": item["artist_id"], "role": item.get("role", "")}
+        {
+            "artist_id": item["artist_id"],
+            "role": item.get("role", ""),
+            "instrument": item.get("instrument") or None,
+        }
         for item in form["artists"]
     ]
 

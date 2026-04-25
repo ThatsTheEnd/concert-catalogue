@@ -14,6 +14,7 @@ class ConcertArtist(Base):
     concert_id: Mapped[int] = mapped_column(ForeignKey("concerts.id"), primary_key=True)
     artist_id: Mapped[int] = mapped_column(ForeignKey("artists.id"), primary_key=True)
     role: Mapped[str] = mapped_column(String(100), default="")
+    instrument: Mapped[str | None] = mapped_column(String(100), default=None)
 
     concert: Mapped[Concert] = relationship(back_populates="artist_links")
     artist: Mapped[Artist] = relationship(back_populates="concert_links")
@@ -38,21 +39,21 @@ class Concert(Base):
     date: Mapped[date] = mapped_column(Date)
     orchestra_id: Mapped[int | None] = mapped_column(ForeignKey("orchestras.id"), default=None)
     venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id"), default=None)
-    conductor_id: Mapped[int | None] = mapped_column(ForeignKey("conductors.id"), default=None)
+    conductor_id: Mapped[int | None] = mapped_column(ForeignKey("artists.id"), default=None)
     # Choir — both fields are optional; a concert may have no choir at all
     choir: Mapped[str] = mapped_column(String(200), default="")
     choir_director_id: Mapped[int | None] = mapped_column(
-        ForeignKey("conductors.id"), default=None
+        ForeignKey("artists.id"), default=None
     )
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     orchestra: Mapped[Orchestra | None] = relationship(back_populates="concerts")
     venue: Mapped[Venue | None] = relationship(back_populates="concerts")
-    conductor: Mapped[Conductor | None] = relationship(
-        back_populates="concerts", foreign_keys="[Concert.conductor_id]"
+    conductor: Mapped[Artist | None] = relationship(
+        foreign_keys="[Concert.conductor_id]"
     )
-    choir_director: Mapped[Conductor | None] = relationship(
+    choir_director: Mapped[Artist | None] = relationship(
         foreign_keys="[Concert.choir_director_id]"
     )
     artist_links: Mapped[list[ConcertArtist]] = relationship(

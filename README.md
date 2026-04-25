@@ -53,7 +53,6 @@ on your operating system:
 |----------|-----------------------|
 | **Windows** | `%LOCALAPPDATA%\KonzertKatalog\konzert.db` |
 | **macOS** | `~/Library/Application Support/KonzertKatalog/konzert.db` |
-| **Linux** | `~/.local/share/konzertkatalog/konzert.db` |
 
 The folder is created automatically on first launch. You can **back up** your data at
 any time by copying this file, and you can **move it** to another machine just by

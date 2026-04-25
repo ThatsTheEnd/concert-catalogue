@@ -2,7 +2,7 @@ from datetime import date
 
 from loguru import logger
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, aliased, joinedload
 
 from app.models import (
     Artist,
@@ -10,11 +10,13 @@ from app.models import (
     Concert,
     ConcertArtist,
     ConcertPiece,
-    Conductor,
     Orchestra,
     Piece,
     Venue,
 )
+
+# Alias for the Artist joined as conductor (avoids collision with soloist join)
+_ConductorArtist = aliased(Artist, name="conductor_artist")
 
 
 def create_concert(
@@ -53,6 +55,7 @@ def create_concert(
             concert_id=concert.id,
             artist_id=item["artist_id"],
             role=item.get("role", ""),
+            instrument=item.get("instrument") or None,
         ))
 
     session.commit()
@@ -75,8 +78,8 @@ def _search_filter(search: str):
     return or_(
         Orchestra.name.ilike(pattern),
         Concert.choir.ilike(pattern),
-        Conductor.first_name.ilike(pattern),
-        Conductor.last_name.ilike(pattern),
+        _ConductorArtist.first_name.ilike(pattern),
+        _ConductorArtist.last_name.ilike(pattern),
         Venue.name.ilike(pattern),
         Venue.city.ilike(pattern),
         Artist.first_name.ilike(pattern),
@@ -91,7 +94,7 @@ def _joined_query():
     return (
         select(Concert)
         .outerjoin(Concert.orchestra)
-        .outerjoin(Concert.conductor)
+        .outerjoin(_ConductorArtist, Concert.conductor_id == _ConductorArtist.id)
         .outerjoin(Concert.venue)
         .outerjoin(Concert.artist_links)
         .outerjoin(ConcertArtist.artist)

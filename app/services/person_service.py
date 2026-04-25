@@ -2,48 +2,7 @@ from loguru import logger
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.models import Artist, Composer, Conductor
-
-
-def create_conductor(
-    session: Session, first_name: str = "", last_name: str = "", **kwargs
-) -> Conductor:
-    obj = Conductor(first_name=first_name, last_name=last_name, **kwargs)
-    session.add(obj)
-    session.commit()
-    logger.info("Created conductor: {} {}", first_name, last_name)
-    return obj
-
-
-def update_conductor(session: Session, conductor_id: int, **kwargs) -> Conductor | None:
-    obj = session.get(Conductor, conductor_id)
-    if obj is None:
-        return None
-    for k, v in kwargs.items():
-        setattr(obj, k, v)
-    session.commit()
-    logger.info("Updated conductor id={} fields={}", conductor_id, list(kwargs.keys()))
-    return obj
-
-
-def delete_conductor(session: Session, conductor_id: int) -> None:
-    obj = session.get(Conductor, conductor_id)
-    if obj is not None:
-        session.delete(obj)
-        session.commit()
-        logger.info("Deleted conductor id={}", conductor_id)
-
-
-def list_conductors(session: Session) -> list[Conductor]:
-    return list(session.scalars(select(Conductor).order_by(Conductor.last_name)))
-
-
-def search_conductors(session: Session, query: str) -> list[Conductor]:
-    p = f"%{query}%"
-    stmt = select(Conductor).where(
-        or_(Conductor.first_name.ilike(p), Conductor.last_name.ilike(p))
-    ).order_by(Conductor.last_name)
-    return list(session.scalars(stmt))
+from app.models import Artist, Composer
 
 
 def create_composer(
@@ -88,12 +47,18 @@ def search_composers(session: Session, query: str) -> list[Composer]:
 
 
 def create_artist(
-    session: Session, first_name: str = "", last_name: str = "", instrument: str = "", **kwargs
+    session: Session,
+    first_name: str = "",
+    last_name: str = "",
+    default_instrument: str | None = None,
+    **kwargs,
 ) -> Artist:
-    obj = Artist(first_name=first_name, last_name=last_name, instrument=instrument, **kwargs)
+    obj = Artist(
+        first_name=first_name, last_name=last_name, default_instrument=default_instrument, **kwargs
+    )
     session.add(obj)
     session.commit()
-    logger.info("Created artist: {} {} ({})", first_name, last_name, instrument)
+    logger.info("Created artist: {} {} ({})", first_name, last_name, default_instrument)
     return obj
 
 
@@ -123,6 +88,10 @@ def list_artists(session: Session) -> list[Artist]:
 def search_artists(session: Session, query: str) -> list[Artist]:
     p = f"%{query}%"
     stmt = select(Artist).where(
-        or_(Artist.first_name.ilike(p), Artist.last_name.ilike(p), Artist.instrument.ilike(p))
+        or_(
+            Artist.first_name.ilike(p),
+            Artist.last_name.ilike(p),
+            Artist.default_instrument.ilike(p),
+        )
     ).order_by(Artist.last_name)
     return list(session.scalars(stmt))

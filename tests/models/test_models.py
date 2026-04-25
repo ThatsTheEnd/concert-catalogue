@@ -6,7 +6,6 @@ from app.models import (
     Concert,
     ConcertArtist,
     ConcertPiece,
-    Conductor,
     Orchestra,
     Piece,
     Venue,
@@ -19,13 +18,6 @@ def test_venue_repr(session):
     session.commit()
     assert "Elbphilharmonie" in repr(venue)
     assert "Hamburg" in repr(venue)
-
-
-def test_conductor_full_name(session):
-    c = Conductor(first_name="Simon", last_name="Rattle")
-    session.add(c)
-    session.commit()
-    assert c.full_name == "Simon Rattle"
 
 
 def test_composer_full_name(session):
@@ -80,7 +72,7 @@ def test_concert_without_conductor(session):
 
 def test_concert_with_choir(session):
     """Concert can have a choir name and choir director (both optional)."""
-    director = Conductor(first_name="Simon", last_name="Halsey")
+    director = Artist(first_name="Simon", last_name="Halsey")
     session.add(director)
     session.flush()
     orch = Orchestra(name="Berliner Philharmoniker")
@@ -100,8 +92,8 @@ def test_concert_with_choir(session):
 
 def test_concert_with_multiple_soloists(session):
     """A concert can have more than one soloist."""
-    a1 = Artist(first_name="Anne-Sophie", last_name="Mutter", instrument="Violin")
-    a2 = Artist(first_name="Yo-Yo", last_name="Ma", instrument="Cello")
+    a1 = Artist(first_name="Anne-Sophie", last_name="Mutter", default_instrument="Violin")
+    a2 = Artist(first_name="Yo-Yo", last_name="Ma", default_instrument="Cello")
     session.add_all([a1, a2])
     session.flush()
     orch = Orchestra(name="Chamber Orchestra")
@@ -119,13 +111,13 @@ def test_concert_with_multiple_soloists(session):
 
 def test_concert_with_all_relations(session):
     venue = Venue(name="Berliner Philharmonie", city="Berlin")
-    conductor = Conductor(first_name="Herbert von", last_name="Karajan")
+    conductor = Artist(first_name="Herbert von", last_name="Karajan")
     composer = Composer(first_name="Johannes", last_name="Brahms")
     session.add_all([venue, conductor, composer])
     session.flush()
 
     piece = Piece(composer_id=composer.id, title="Symphony No. 4", key="E minor")
-    artist = Artist(first_name="Anne-Sophie", last_name="Mutter", instrument="Violin")
+    artist = Artist(first_name="Anne-Sophie", last_name="Mutter", default_instrument="Violin")
     session.add_all([piece, artist])
     session.flush()
 
