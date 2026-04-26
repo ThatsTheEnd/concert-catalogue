@@ -41,6 +41,10 @@ def concert_detail_page(concert_id: int) -> None:
 
         with ui.row().classes("gap-2 shrink-0"):
             ui.button(
+                t("back_to_concerts"),
+                on_click=lambda: ui.navigate.to("/concerts"),
+            ).props("flat")
+            ui.button(
                 t("edit"),
                 on_click=lambda: ui.navigate.to(f"/concerts/{concert_id}/edit"),
             ).props("outline")

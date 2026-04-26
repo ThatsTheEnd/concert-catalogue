@@ -4,6 +4,24 @@ All notable changes to KonzertKatalog are documented here.
 
 ---
 
+## [1.2.0] — 2026-04-26
+
+### Added
+
+- **Werke editable** — pieces in the Reference Data → Werke tab can now be
+  edited (title, key, catalogue number, composer) and deleted, matching the
+  behaviour of all other reference data tabs. Resolves #11 / #19.
+- **Back to concerts button** — a `← Concerts` button now appears in the
+  concert detail header, allowing users to return to the concert list after
+  viewing or creating a concert without having to use the nav bar.
+
+### Fixed / Tests
+
+- Added service-layer tests for `update_piece` and `delete_piece` to ensure
+  both operations are covered.
+
+---
+
 ## [1.1.1] — 2026-04-26
 
 ### Fixed
