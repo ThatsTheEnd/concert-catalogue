@@ -4,6 +4,18 @@ All notable changes to KonzertKatalog are documented here.
 
 ---
 
+## [1.3.0] — 2026-04-26
+
+### Fixed
+
+- **Artist search covers all roles** — filtering concerts by artist in the
+  advanced search page now returns concerts where that person appears as
+  conductor or choir director, not only as a soloist. Previously an artist like
+  Florian Donderer (registered with a default instrument) was invisible in
+  search results when he had conducted a concert. Resolves #17.
+
+---
+
 ## [1.2.2] — 2026-04-26
 
 ### Fixed

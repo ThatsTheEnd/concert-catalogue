@@ -6,6 +6,7 @@ from app.models import Artist, Composer, Piece, Venue
 from app.services.concert_service import (
     create_concert,
     delete_concert,
+    filter_concerts,
     get_concert,
     list_concerts,
     update_concert,
@@ -104,3 +105,82 @@ def test_create_concert_with_pieces_and_artists(session, seed):
     assert len(concert.piece_links) == 1
     assert len(concert.artist_links) == 1
     assert concert.piece_links[0].sort_order == 1
+
+
+# ---------------------------------------------------------------------------
+# filter_concerts — artist_id must match across all roles (issue #17)
+# ---------------------------------------------------------------------------
+
+
+def test_filter_by_artist_id_finds_concert_where_artist_is_conductor(session):
+    """Filtering by artist_id must include concerts where that artist is conductor."""
+    donderer = Artist(first_name="Florian", last_name="Donderer", default_instrument="Violin")
+    session.add(donderer)
+    session.flush()
+    concert = create_concert(session, date=date(2024, 3, 15), conductor_id=donderer.id)
+
+    results = filter_concerts(session, artist_id=donderer.id)
+
+    assert any(c.id == concert.id for c in results), (
+        "Concert where the artist is conductor was not returned when filtering by artist_id"
+    )
+
+
+def test_filter_by_artist_id_finds_concert_where_artist_is_choir_director(session):
+    """Filtering by artist_id must include concerts where that artist is choir director."""
+    donderer = Artist(first_name="Florian", last_name="Donderer", default_instrument="Violin")
+    session.add(donderer)
+    session.flush()
+    concert = create_concert(
+        session,
+        date=date(2024, 4, 10),
+        choir="Stadtchor",
+        choir_director_id=donderer.id,
+    )
+
+    results = filter_concerts(session, artist_id=donderer.id)
+
+    assert any(c.id == concert.id for c in results), (
+        "Concert where the artist is choir director was not returned when filtering by artist_id"
+    )
+
+
+def test_filter_by_artist_id_still_finds_soloist(session):
+    """Existing soloist behaviour must remain: artist linked via ConcertArtist is still found."""
+    donderer = Artist(first_name="Florian", last_name="Donderer", default_instrument="Violin")
+    session.add(donderer)
+    session.flush()
+    concert = create_concert(
+        session,
+        date=date(2024, 5, 1),
+        artists=[{"artist_id": donderer.id, "role": "Soloist"}],
+    )
+
+    results = filter_concerts(session, artist_id=donderer.id)
+
+    assert any(c.id == concert.id for c in results), (
+        "Concert where the artist is a soloist was not returned — regression in existing behaviour"
+    )
+
+
+def test_filter_by_artist_id_returns_all_roles_and_excludes_unrelated(session):
+    """Artist in multiple roles → both concerts returned; unrelated concert excluded."""
+    donderer = Artist(first_name="Florian", last_name="Donderer", default_instrument="Violin")
+    other = Artist(first_name="Other", last_name="Conductor")
+    session.add_all([donderer, other])
+    session.flush()
+
+    c_conductor = create_concert(session, date=date(2024, 1, 1), conductor_id=donderer.id)
+    c_soloist = create_concert(
+        session,
+        date=date(2024, 2, 1),
+        artists=[{"artist_id": donderer.id, "role": "Soloist"}],
+    )
+    c_unrelated = create_concert(session, date=date(2024, 3, 1), conductor_id=other.id)
+
+    results = filter_concerts(session, artist_id=donderer.id)
+    result_ids = {c.id for c in results}
+
+    assert c_conductor.id in result_ids
+    assert c_soloist.id in result_ids
+    assert c_unrelated.id not in result_ids

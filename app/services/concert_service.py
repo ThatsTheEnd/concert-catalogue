@@ -162,7 +162,13 @@ def _filter_query(
     if conductor_id is not None:
         stmt = stmt.where(Concert.conductor_id == conductor_id)
     if artist_id is not None:
-        stmt = stmt.where(Artist.id == artist_id)
+        stmt = stmt.where(
+            or_(
+                Artist.id == artist_id,
+                Concert.conductor_id == artist_id,
+                Concert.choir_director_id == artist_id,
+            )
+        )
     if orchestra_id is not None:
         stmt = stmt.where(Concert.orchestra_id == orchestra_id)
     if venue_id is not None:
