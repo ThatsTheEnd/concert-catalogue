@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from loguru import logger
 from nicegui import ui
 
@@ -6,6 +8,13 @@ from app.i18n import t
 from app.models import AttachmentType
 from app.services.concert_service import delete_concert, get_concert
 from app.storage.file_handler import url_for_upload
+
+_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
+
+
+def _is_image(filename: str) -> bool:
+    """Return True if *filename* has a recognised image extension."""
+    return Path(filename).suffix.lower() in _IMAGE_EXTENSIONS
 
 
 def concert_detail_page(concert_id: int) -> None:
@@ -116,11 +125,19 @@ def concert_detail_page(concert_id: int) -> None:
 
 
 def _image_thumbnail(url: str, label: str) -> None:
-    with ui.card().classes("cursor-pointer").on(
-        "click", lambda u=url, lbl=label: _open_lightbox(u, lbl)
-    ):
-        ui.image(url).classes("w-40 h-40 object-cover")
-        ui.label(label).classes("text-xs text-gray-500 truncate max-w-40")
+    if _is_image(label):
+        with ui.card().classes("cursor-pointer").on(
+            "click", lambda u=url, lbl=label: _open_lightbox(u, lbl)
+        ):
+            ui.image(url).classes("w-40 h-40 object-cover")
+            ui.label(label).classes("text-xs text-gray-500 truncate max-w-40")
+    else:
+        with ui.card().classes("cursor-pointer").on(
+            "click", lambda u=url: ui.navigate.to(u, new_tab=True)
+        ):
+            with ui.element("div").classes("w-40 h-40 flex items-center justify-center"):
+                ui.icon("description").classes("text-6xl text-gray-400")
+            ui.label(label).classes("text-xs text-gray-500 truncate max-w-40")
 
 
 def _open_lightbox(url: str, label: str) -> None:
