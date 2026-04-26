@@ -1,6 +1,6 @@
 [project]
 name = "konzertkatalog"
-version = "1.2.0"
+version = "1.2.1"
 description = "Personal classical concert archive"
 requires-python = ">=3.13"
 dependencies = [

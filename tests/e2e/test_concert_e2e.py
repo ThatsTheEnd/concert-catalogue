@@ -148,3 +148,35 @@ async def test_concert_list_search_by_orchestra(user: User) -> None:
     fire_value_change(user, search_input, 'XYZ_NO_MATCH')
     rows_no_match = _get_table_rows(user)
     assert not rows_no_match, f"Expected 0 results for 'XYZ_NO_MATCH', got: {rows_no_match}"
+
+
+async def test_concert_list_quick_filter_is_connected(user: User) -> None:
+    """Quick filter input is wired up: a no-match term empties the table."""
+    await user.open('/concerts')
+    rows_before = _get_table_rows(user)
+    assert rows_before, "Seeded DB should have at least one concert"
+
+    with user:
+        search_inputs = list(ElementFilter(kind=ui.input, only_visible=True))
+        search_input = search_inputs[0]
+
+    fire_value_change(user, search_input, 'ZZZ_NOTHING_MATCHES_THIS')
+    rows_after = _get_table_rows(user)
+    assert not rows_after, (
+        "Quick filter has no effect — event binding is likely broken "
+        f"(got {len(rows_after)} rows, expected 0)"
+    )
+
+
+async def test_concert_list_has_advanced_search_link(user: User) -> None:
+    """Concerts list shows an 'Advanced search' link pointing to /search."""
+    await user.open('/concerts')
+    await user.should_see('Advanced search →')
+
+    with user:
+        links = list(ElementFilter(kind=ui.link))
+    search_links = [lnk for lnk in links if 'Advanced search' in (lnk.text or '')]
+    assert search_links, "No ui.link with 'Advanced search' found"
+    assert any(lnk._props.get('href') == '/search' for lnk in search_links), (
+        f"Expected link href '/search', got: {[lnk._props.get('href') for lnk in search_links]}"
+    )
