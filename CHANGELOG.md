@@ -4,6 +4,39 @@ All notable changes to KonzertKatalog are documented here.
 
 ---
 
+## [1.2.1] — 2026-04-26
+
+### Fixed
+
+- **Quick filter wired up** — the text input on the concerts list was not
+  triggering searches due to a wrong Vue event binding (`update:model-value`
+  with `GenericEventArguments` instead of `on_change` with
+  `ValueChangeEventArguments`). Typing in the field now actually filters the
+  list.
+- **Session not prematurely closed** — `session.close()` was called immediately
+  after the initial page render, before any user interaction. Subsequent
+  searches would silently fail. The session is now kept open for the lifetime
+  of the page (closed on disconnect, as intended).
+
+### Changed
+
+- **Quick filter relabelled** — placeholder changed from "Search composers,
+  artists, venues…" to "Quick filter…" (EN) / "Schnellfilter…" (DE) to reflect
+  its narrower scope vs. the dedicated search page.
+- **"Advanced search →" link** — a muted link next to the quick filter now
+  points directly to `/search` for users who need date-range or per-entity
+  filtering.
+
+### Tests
+
+- `test_concert_list_quick_filter_is_connected` — regression guard: proves the
+  filter input is actually wired up by asserting a no-match term empties the
+  table.
+- `test_concert_list_has_advanced_search_link` — verifies the "Advanced search"
+  link is present and href-targets `/search`.
+
+---
+
 ## [1.2.0] — 2026-04-26
 
 ### Added

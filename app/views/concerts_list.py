@@ -62,11 +62,8 @@ def concerts_list_page() -> None:
         ui.navigate.to(f"/concerts/{concert_id}")
 
     with ui.row().classes("w-full items-center gap-4 mb-4"):
-        (
-            ui.input(placeholder=t("search_concerts"))
-            .classes("flex-1")
-            .on("update:model-value", on_search)
-        )
+        ui.input(placeholder=t("search_concerts"), on_change=on_search).classes("flex-1")
+        ui.link(t("advanced_search"), "/search").classes("text-sm text-gray-500 whitespace-nowrap")
         pagination_label = ui.label("").classes("text-sm text-gray-500")
         ui.button(t("add_concert"), on_click=lambda: ui.navigate.to("/concerts/new")).props(
             "color=primary"
@@ -88,4 +85,3 @@ def concerts_list_page() -> None:
         ui.button(t("next"), on_click=next_page).props("flat")
 
     load()
-    session.close()

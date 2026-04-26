@@ -16,7 +16,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "search_placeholder": "Search…",
         # Concert list
         "add_concert": "+ Add Concert",
-        "search_concerts": "Search composers, artists, venues…",
+        "search_concerts": "Quick filter…",
+        "advanced_search": "Advanced search →",
         "no_results": "No concerts found.",
         "of_concerts": "concert(s)",
         "prev": "←",
@@ -128,7 +129,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "search_placeholder": "Suchen…",
         # Concert list
         "add_concert": "+ Konzert hinzufügen",
-        "search_concerts": "Komponisten, Künstler, Spielstätten suchen…",
+        "search_concerts": "Schnellfilter…",
+        "advanced_search": "Erweiterte Suche →",
         "no_results": "Keine Konzerte gefunden.",
         "of_concerts": "Konzert(e)",
         "prev": "←",
