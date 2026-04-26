@@ -72,12 +72,12 @@ def concert_detail_page(concert_id: int) -> None:
                     if composer_name:
                         ui.label(composer_name).classes("text-sm text-gray-500")
                     if link.notes:
-                        ui.label(link.notes).classes("text-xs text-gray-400 italic")
+                        ui.label(link.notes).classes("text-xs text-gray-400 italic whitespace-pre-wrap")
 
     # ── Notes ────────────────────────────────────────────────────────────────
     if concert.notes:
         ui.label(t("notes")).classes("text-lg font-semibold mt-4 mb-1")
-        ui.label(concert.notes).classes("text-gray-700")
+        ui.label(concert.notes).classes("text-gray-700 whitespace-pre-wrap")
 
     # ── Attachments ──────────────────────────────────────────────────────────
     attachments_by_type: dict[str, list] = {t_val: [] for t_val in AttachmentType}
