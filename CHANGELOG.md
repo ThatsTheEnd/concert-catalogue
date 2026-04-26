@@ -4,6 +4,29 @@ All notable changes to KonzertKatalog are documented here.
 
 ---
 
+## [1.2.2] — 2026-04-26
+
+### Fixed
+
+- **PDF attachments openable** — clicking a PDF (or any non-image) attachment
+  in the concert detail view now opens the file in a new browser tab instead of
+  showing a blank lightbox dialog. Images continue to open in the in-page
+  lightbox as before. Non-image thumbnails now display a document icon so users
+  can recognise the file type at a glance. Resolves #10.
+
+### Tests
+
+- `test_is_image_returns_true_for_image_extensions` — parametrised over common
+  image extensions (jpg, jpeg, png, gif, webp, bmp, svg) including mixed case.
+- `test_is_image_returns_false_for_non_image_files` — parametrised over pdf,
+  docx, txt, zip and extension-less filenames.
+- `test_is_image_strips_path_components` — verifies path prefixes do not
+  interfere with the extension check.
+- `test_is_image_timestamped_pdf_filename` — exercises the real-world filename
+  pattern produced by the upload handler.
+
+---
+
 ## [1.2.1] — 2026-04-26
 
 ### Fixed
