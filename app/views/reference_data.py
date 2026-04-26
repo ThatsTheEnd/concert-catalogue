@@ -91,7 +91,7 @@ def _delete_dialog(on_confirm: Callable[[], None]) -> ui.dialog:
 
 def _orchestras_panel(session) -> None:
     columns = [
-        {"name": "name", "label": t("col_orchestra"), "field": "name", "sortable": True},
+        {"name": "name", "label": t("col_orchestra"), "field": "name", "sortable": True, "align": "left"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 
@@ -178,11 +178,11 @@ def _orchestras_panel(session) -> None:
 
 def _composers_panel(session, comp_refresh_hooks: list) -> None:
     columns = [
-        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
-        {"name": "birth_year", "label": t("birth_year"), "field": "birth_year"},
-        {"name": "death_year", "label": t("death_year"), "field": "death_year"},
-        {"name": "catalogue", "label": t("catalogue_label"), "field": "catalogue"},
+        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True, "align": "left"},
+        {"name": "first_name", "label": t("first_name"), "field": "first_name", "align": "left"},
+        {"name": "birth_year", "label": t("birth_year"), "field": "birth_year", "align": "left"},
+        {"name": "death_year", "label": t("death_year"), "field": "death_year", "align": "left"},
+        {"name": "catalogue", "label": t("catalogue_label"), "field": "catalogue", "align": "left"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 
@@ -302,9 +302,9 @@ def _composers_panel(session, comp_refresh_hooks: list) -> None:
 
 def _artists_panel(session) -> None:
     columns = [
-        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True},
-        {"name": "first_name", "label": t("first_name"), "field": "first_name"},
-        {"name": "default_instrument", "label": t("default_instrument"), "field": "default_instrument"},
+        {"name": "last_name", "label": t("last_name"), "field": "last_name", "sortable": True, "align": "left"},
+        {"name": "first_name", "label": t("first_name"), "field": "first_name", "align": "left"},
+        {"name": "default_instrument", "label": t("default_instrument"), "field": "default_instrument", "align": "left"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 
@@ -412,10 +412,10 @@ def _artists_panel(session) -> None:
 
 def _pieces_panel(session, comp_refresh_hooks: list) -> None:
     columns = [
-        {"name": "composer", "label": t("composer"), "field": "composer", "sortable": True},
-        {"name": "title", "label": t("piece_title"), "field": "title", "sortable": True},
-        {"name": "key", "label": t("key"), "field": "key"},
-        {"name": "catalogue_number", "label": t("catalogue_number"), "field": "catalogue_number"},
+        {"name": "composer", "label": t("composer"), "field": "composer", "sortable": True, "align": "left"},
+        {"name": "title", "label": t("piece_title"), "field": "title", "sortable": True, "align": "left"},
+        {"name": "key", "label": t("key"), "field": "key", "align": "left"},
+        {"name": "catalogue_number", "label": t("catalogue_number"), "field": "catalogue_number", "align": "left"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 
@@ -559,9 +559,9 @@ def _pieces_panel(session, comp_refresh_hooks: list) -> None:
 
 def _venues_panel(session) -> None:
     columns = [
-        {"name": "name", "label": t("col_venue"), "field": "name", "sortable": True},
-        {"name": "city", "label": t("city"), "field": "city"},
-        {"name": "country", "label": t("country"), "field": "country"},
+        {"name": "name", "label": t("col_venue"), "field": "name", "sortable": True, "align": "left"},
+        {"name": "city", "label": t("city"), "field": "city", "align": "left"},
+        {"name": "country", "label": t("country"), "field": "country", "align": "left"},
         {"name": "actions", "label": "", "field": "id", "align": "right"},
     ]
 

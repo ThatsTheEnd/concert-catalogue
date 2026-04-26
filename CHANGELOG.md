@@ -2,6 +2,20 @@
 
 All notable changes to KonzertKatalog are documented here.
 
+---
+
+## [1.1.1] — 2026-04-26
+
+### Fixed
+
+- **Reference data tables** — all columns (Werke, Komponisten, Künstler,
+  Orchester, Spielorte) were right-aligned by default due to Quasar's table
+  default. Explicit `align: left` added to every content column. (#12, #16)
+- **Notes line breaks** — newlines entered in the Notizen textarea were
+  collapsed to a single line on the concert detail view. Both concert-level
+  and piece-level notes now render with `whitespace-pre-wrap`. (#13)
+
+
 ## [1.0.0] — 2026-04-25
 
 ### Breaking — Database schema change
