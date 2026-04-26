@@ -29,6 +29,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "col_soloists": "Soloists",
         "col_choir": "Choir",
         # Concert detail
+        "back_to_concerts": "← Concerts",
         "conducted_by": "Conducted by",
         "choir": "Choir",
         "choir_director": "Choir Director",
@@ -140,6 +141,7 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "col_soloists": "Solisten",
         "col_choir": "Chor",
         # Concert detail
+        "back_to_concerts": "← Konzerte",
         "conducted_by": "Dirigent",
         "choir": "Chor",
         "choir_director": "Chordirektor",
